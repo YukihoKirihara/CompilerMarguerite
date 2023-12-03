@@ -19,8 +19,8 @@ fn main() -> Result<()> {
 
     let input = read_to_string(input)?;
     let ast = sysy::CompUnitParser::new().parse(&input).unwrap();
+    println!("{:#?}", ast);
     let irprogram = irgen::generate(&ast).unwrap();
-
     KoopaGenerator::from_path(output)
         .unwrap()
         .generate_on(&irprogram)?;

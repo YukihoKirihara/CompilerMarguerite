@@ -2,7 +2,7 @@ use super::function::FunctionInfo;
 use super::scope_manager::ScopeManager;
 use crate::ast::*;
 use koopa::ir::builder_traits::*;
-use koopa::ir::{FunctionData, Program, Type};
+use koopa::ir::{FunctionData, Program, Type, Value};
 
 pub trait IRGenerator<'ast> {
     type Ret;
@@ -90,7 +90,9 @@ impl<'ast> IRGenerator<'ast> for FuncType {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, ()> {
-        Ok(Type::get_i32())
+        match self {
+            Self::Int => Ok(Type::get_i32()),
+        }
     }
 }
 
@@ -115,6 +117,40 @@ impl<'ast> IRGenerator<'ast> for Stmt {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, ()> {
+        let _ = match self {
+            Self::Return(ret) => ret.generate(program, scopes),
+            _ => Ok(()),
+        };
         Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for Return {
+    type Ret = ();
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, ()> {
+        let value = self.expr.generate(program, scopes).unwrap();
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let ret_val = info.ret_val().unwrap();
+        let store = info.create_new_value(program).store(value, ret_val);
+        info.push_inst(program, info.curr_bblock(), store);
+        Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for Expr {
+    type Ret = Value;
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, ()> {
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let value = info.create_new_value(program).integer(self.num);
+        // info.push_inst(program, info.curr_bblock(), value);
+        Ok(value)
     }
 }

@@ -5,6 +5,7 @@ use koopa::ir::{BasicBlock, Function, Program};
 pub struct FunctionInfo {
     func: Function,
     entry: BasicBlock,
+    curr: BasicBlock,
     ret_val: Option<Value>,
 }
 
@@ -14,6 +15,7 @@ impl FunctionInfo {
         Self {
             func,
             entry,
+            curr: entry,
             ret_val,
         }
     }
@@ -26,6 +28,11 @@ impl FunctionInfo {
     /// Return the entry block
     pub fn entry(&self) -> BasicBlock {
         self.entry
+    }
+
+    /// Return the current block
+    pub fn curr_bblock(&self) -> BasicBlock {
+        self.curr
     }
 
     /// Return the return value
@@ -50,6 +57,7 @@ impl FunctionInfo {
             .bbs_mut()
             .push_key_back(bb)
             .unwrap();
+        self.curr = bb;
     }
 
     /// Create a new value
