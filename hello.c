@@ -3,5 +3,5 @@
 int main()
 {
     // This is also a comment.
-    return 3;
+    return 0x10;
 }
