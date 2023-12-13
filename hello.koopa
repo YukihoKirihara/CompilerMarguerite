@@ -1,9 +1,8 @@
 fun @main(): i32 {
 %entry:
   %ret = alloc i32
-  %0 = sub 0, 1
-  %1 = add %0, 2
-  store %1, %ret
-  %2 = load %ret
-  ret %2
+  %0 = or %1, %2
+  store %0, %ret
+  %3 = load %ret
+  ret %3
 }

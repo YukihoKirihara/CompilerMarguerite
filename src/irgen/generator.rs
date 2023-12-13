@@ -153,9 +153,16 @@ impl<'ast> IRGenerator<'ast> for LOrExp {
                 let lhs = lor_exp.generate(program, scopes).unwrap();
                 let rhs = land_exp.generate(program, scopes).unwrap();
                 let info = scopes.mut_ref_curr_func().unwrap();
+                let zero = info.create_new_value(program).integer(0);
+                let lvalue = info
+                    .create_new_value(program)
+                    .binary(BinaryOp::NotEq, zero, lhs);
+                let rvalue = info
+                    .create_new_value(program)
+                    .binary(BinaryOp::NotEq, zero, rhs);
                 let value = info
                     .create_new_value(program)
-                    .binary(BinaryOp::Or, lhs, rhs);
+                    .binary(BinaryOp::Or, lvalue, rvalue);
                 info.push_inst_curr_bblock(program, value);
                 Ok(value)
             }
@@ -176,9 +183,16 @@ impl<'ast> IRGenerator<'ast> for LAndExp {
                 let lhs = land_exp.generate(program, scopes).unwrap();
                 let rhs = eq_exp.generate(program, scopes).unwrap();
                 let info = scopes.mut_ref_curr_func().unwrap();
+                let zero = info.create_new_value(program).integer(0);
+                let lvalue = info
+                    .create_new_value(program)
+                    .binary(BinaryOp::NotEq, zero, lhs);
+                let rvalue = info
+                    .create_new_value(program)
+                    .binary(BinaryOp::NotEq, zero, rhs);
                 let value = info
                     .create_new_value(program)
-                    .binary(BinaryOp::And, lhs, rhs);
+                    .binary(BinaryOp::And, lvalue, rvalue);
                 info.push_inst_curr_bblock(program, value);
                 Ok(value)
             }
@@ -346,8 +360,8 @@ impl<'ast> IRGenerator<'ast> for UnaryExp {
                 let rhs = pri_exp.generate(program, scopes).unwrap();
                 let op = unary_op.generate(program, scopes).unwrap();
                 let info = scopes.mut_ref_curr_func().unwrap();
-                let lhs = info.create_new_value(program).integer(0);
-                let value = info.create_new_value(program).binary(op, lhs, rhs);
+                let zero = info.create_new_value(program).integer(0);
+                let value = info.create_new_value(program).binary(op, zero, rhs);
                 info.push_inst_curr_bblock(program, value);
                 Ok(value)
             }
