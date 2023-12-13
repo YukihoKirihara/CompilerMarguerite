@@ -76,6 +76,12 @@ impl FunctionInfo {
             .unwrap();
     }
 
+    /// Add an instruction to the current block. A wrapped function just for convenience.
+    pub fn push_inst_curr_bblock(&mut self, program: &mut Program, inst: Value) {
+        let bb = self.curr_bblock();
+        self.push_inst(program, bb, inst);
+    }
+
     // Construct the end of the function
     pub fn conclude_func(&mut self, program: &mut Program) -> () {
         let value = self.create_new_value(program).load(self.ret_val.unwrap());

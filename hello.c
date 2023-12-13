@@ -1,7 +1,11 @@
-/* This is a comment. */
 
-int main()
+
+int
+
+main()
 {
-    // This is also a comment.
-    return 0x10;
+    /*
+    ...
+    */
+    return -1 + 2; // ...
 }
