@@ -157,9 +157,11 @@ impl<'ast> IRGenerator<'ast> for LOrExp {
                 let lvalue = info
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, lhs);
+                info.push_inst_curr_bblock(program, lvalue);
                 let rvalue = info
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, rhs);
+                info.push_inst_curr_bblock(program, rvalue);
                 let value = info
                     .create_new_value(program)
                     .binary(BinaryOp::Or, lvalue, rvalue);
@@ -187,9 +189,11 @@ impl<'ast> IRGenerator<'ast> for LAndExp {
                 let lvalue = info
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, lhs);
+                info.push_inst_curr_bblock(program, lvalue);
                 let rvalue = info
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, rhs);
+                info.push_inst_curr_bblock(program, rvalue);
                 let value = info
                     .create_new_value(program)
                     .binary(BinaryOp::And, lvalue, rvalue);
