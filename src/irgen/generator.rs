@@ -180,7 +180,7 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
         let exit_block = data
             .dfg_mut()
             .new_bb()
-            .basic_block(Some("%end".to_string()));
+            .basic_block(Some("%exit".to_string()));
         // Genereate the return value
         let alloc = data.dfg_mut().new_value().alloc(Type::get_i32());
         data.dfg_mut()

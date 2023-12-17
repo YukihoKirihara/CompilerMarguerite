@@ -8,9 +8,13 @@ fun @main(): i32 {
   jump %end
 
 %1:
+  store 1, %ret
+  jump %end
+
+%2:
   jump %end
 
 %end:
-  %2 = load %ret
-  ret %2
+  %3 = load %ret
+  ret %3
 }
