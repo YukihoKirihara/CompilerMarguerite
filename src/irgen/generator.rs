@@ -267,6 +267,7 @@ impl<'ast> IRGenerator<'ast> for Stmt {
             Self::Assign(assign) => assign.generate(program, scopes),
             Self::IdleExp(exp) => exp.generate(program, scopes),
             Self::Block(block) => block.generate(program, scopes),
+            Self::IfClause(if_clause) => if_clause.generate(program, scopes),
             Self::Return(ret) => ret.generate(program, scopes),
         };
         Ok(())
@@ -309,6 +310,48 @@ impl<'ast> IRGenerator<'ast> for IdleExp {
         if let Some(exp) = &self.exp {
             exp.generate(program, scopes)?;
         }
+        Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for IfClause {
+    type Ret = ();
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        let cond = self
+            .cond
+            .generate(program, scopes)
+            .unwrap()
+            .get_int_value(program, scopes)
+            .unwrap();
+        let info = scopes.mut_ref_curr_func().unwrap();
+        // Generate the true and false bblock.
+        let true_bblock = info.create_new_bblock(program, Some("%if_true"));
+        let false_bblock = info.create_new_bblock(program, Some("%if_false"));
+        let final_bblock = info.create_new_bblock(program, Some("%if_final"));
+        // Generate the branch instruction.
+        let branch = info
+            .create_new_value(program)
+            .branch(cond, true_bblock, false_bblock);
+        info.push_inst_curr_bblock(program, branch);
+        // Go down the true bblock.
+        info.push_bblock(program, true_bblock);
+        self.true_stmt.generate(program, scopes)?;
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let true_jump = info.create_new_value(program).jump(final_bblock);
+        info.push_inst_curr_bblock(program, true_jump);
+        // Go down the false bblock.
+        info.push_bblock(program, false_bblock);
+        if let Some(false_stmt) = &self.false_stmt {
+            false_stmt.generate(program, scopes)?;
+        }
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let false_jump = info.create_new_value(program).jump(final_bblock);
+        info.push_inst_curr_bblock(program, false_jump);
+        info.push_bblock(program, final_bblock);
         Ok(())
     }
 }

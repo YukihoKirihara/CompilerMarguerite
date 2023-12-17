@@ -4,124 +4,30 @@ fun @main(): i32 {
   jump %0
 
 %0:
-  @a = alloc i32
-  store 1, @a
-  @sum = alloc i32
-  store 0, @sum
-  %1 = load @a
-  %2 = add %1, 2
-  store %2, @a
-  %3 = load @a
-  %4 = add %3, 3
-  @b = alloc i32
-  store %4, @b
-  %5 = load @b
-  %6 = add %5, 4
-  store %6, @b
-  %7 = load @sum
-  %8 = load @a
-  %9 = add %7, %8
-  %10 = load @b
-  %11 = add %9, %10
-  store %11, @sum
-  %12 = load @b
-  %13 = add %12, 5
-  store %13, @b
-  %14 = load @b
-  %15 = add %14, 6
-  @c = alloc i32
-  store %15, @c
-  %16 = load @a
-  %17 = load @c
-  %18 = add %16, %17
-  store %18, @a
-  %19 = load @sum
-  %20 = load @a
-  %21 = add %19, %20
-  %22 = load @b
-  %23 = add %21, %22
-  %24 = load @c
-  %25 = add %23, %24
-  store %25, @sum
-  %26 = load @b
-  %27 = load @a
-  %28 = add %26, %27
-  store %28, @b
-  %29 = load @c
-  %30 = add %29, 7
-  @a_0 = alloc i32
-  store %30, @a_0
-  %31 = load @a_0
-  %32 = add %31, 8
-  store %32, @a_0
-  %33 = load @sum
-  %34 = load @a_0
-  %35 = add %33, %34
-  %36 = load @b
-  %37 = add %35, %36
-  %38 = load @c
-  %39 = add %37, %38
-  store %39, @sum
-  %40 = load @b
-  %41 = load @a_0
-  %42 = add %40, %41
-  store %42, @b
-  %43 = load @c
-  %44 = add %43, 9
-  @b_0 = alloc i32
-  store %44, @b_0
-  %45 = load @a_0
-  %46 = add %45, 10
-  store %46, @a_0
-  %47 = load @b_0
-  %48 = add %47, 12
-  store %48, @b_0
-  %49 = load @sum
-  %50 = add %49, 11
-  %51 = load @b_0
-  %52 = add %50, %51
-  %53 = load @c
-  %54 = add %52, %53
-  store %54, @sum
-  %55 = load @c
-  %56 = load @b_0
-  %57 = add %55, %56
-  store %57, @c
-  %58 = load @b_0
-  %59 = add %58, 13
-  @c_0 = alloc i32
-  store %59, @c_0
-  %60 = load @c_0
-  %61 = add %60, 11
-  store %61, @c_0
-  %62 = load @sum
-  %63 = add %62, 11
-  %64 = load @b_0
-  %65 = add %63, %64
-  %66 = load @c_0
-  %67 = add %65, %66
-  store %67, @sum
-  %68 = load @sum
-  %69 = load @c
-  %70 = sub %68, %69
-  store %70, @sum
-  %71 = load @sum
-  %72 = load @b
-  %73 = sub %71, %72
-  store %73, @sum
-  %74 = load @sum
-  %75 = load @a
-  %76 = sub %74, %75
-  store %76, @sum
-  %77 = load @sum
-  %78 = mod %77, 77
-  store %78, %ret
+  br 0, %if_true, %if_false
+
+%if_true:
+  store 1, %ret
   jump %exit
 
-%79:
+%1:
+  jump %if_final
+
+%if_false:
+  store 2, %ret
+  jump %exit
+
+%2:
+  jump %if_final
+
+%if_final:
+  store 3, %ret
+  jump %exit
+
+%3:
   jump %exit
 
 %exit:
-  %80 = load %ret
-  ret %80
+  %4 = load %ret
+  ret %4
 }

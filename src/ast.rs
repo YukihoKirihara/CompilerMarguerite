@@ -95,12 +95,13 @@ pub enum BlockItem {
 
 /// IV. Statements
 
-/// Stmt        ::= Assign | IdleExp | Block | Return
+/// Stmt        ::= Assign | IdleExp | Block | If | Return
 #[derive(Debug)]
 pub enum Stmt {
     Assign(Assign),
     IdleExp(IdleExp),
     Block(Block),
+    IfClause(IfClause),
     Return(Return),
 }
 
@@ -115,6 +116,14 @@ pub struct Assign {
 #[derive(Debug)]
 pub struct IdleExp {
     pub exp: Option<Exp>,
+}
+
+/// IfClause    ::= "if" "(" Exp ")" Stmt ["else" Stmt]
+#[derive(Debug)]
+pub struct IfClause {
+    pub cond: Exp,
+    pub true_stmt: Box<Stmt>,
+    pub false_stmt: Option<Box<Stmt>>,
 }
 
 /// Return      ::= "return" Exp ";";

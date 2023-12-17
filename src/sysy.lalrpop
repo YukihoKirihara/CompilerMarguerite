@@ -81,15 +81,34 @@ BlockItem: BlockItem = {
 }
 
 /// Statements
+/// Solution of the "dangling else" problem
+Stmt: Stmt = {
+    MatchedStmt => <>,
+    UnMatchedStmt => <>,
+}
+
+/// Matched Statements
 /// Assign: A statement of assignment.
 /// IdleExp: A statement of an optional expression.
 /// Block: A block.
 /// Return: A statement of return with some value.
-Stmt: Stmt = {
+MatchedStmt: Stmt = {
     <lval: LVal> "=" <exp: Exp> ";" => Stmt::Assign(Assign { <> }),
     <exp: (Exp)?> ";" => Stmt::IdleExp(IdleExp { <> }),
     Block => Stmt::Block(<>),
+    "if" "(" <cond: Exp> ")" <true_stmt: MatchedStmt> "else" <false_stmt: MatchedStmt> => {
+        Stmt::IfClause(IfClause{cond: cond, true_stmt: Box::new(true_stmt), false_stmt: Some(Box::new(false_stmt))})
+    },
     "return" <exp: Exp> ";" => Stmt::Return(Return { <> }),
+}
+
+UnMatchedStmt: Stmt = {
+    "if" "(" <cond: Exp> ")" <true_stmt: Stmt> => {
+        Stmt::IfClause(IfClause{cond:cond, true_stmt: Box::new(true_stmt), false_stmt: None})
+    },
+    "if" "(" <cond: Exp> ")" <true_stmt: MatchedStmt> "else" <false_stmt: UnMatchedStmt> => {
+        Stmt::IfClause(IfClause{cond:cond, true_stmt: Box::new(true_stmt), false_stmt: Some(Box::new(false_stmt))})
+    },
 }
 
 /// Expressions. 
