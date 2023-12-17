@@ -82,9 +82,13 @@ BlockItem: BlockItem = {
 
 /// Statements
 /// Assign: A statement of assignment.
+/// IdleExp: A statement of an optional expression.
+/// Block: A block.
 /// Return: A statement of return with some value.
 Stmt: Stmt = {
     <lval: LVal> "=" <exp: Exp> ";" => Stmt::Assign(Assign { <> }),
+    <exp: (Exp)?> ";" => Stmt::IdleExp(IdleExp { <> }),
+    Block => Stmt::Block(<>),
     "return" <exp: Exp> ";" => Stmt::Return(Return { <> }),
 }
 

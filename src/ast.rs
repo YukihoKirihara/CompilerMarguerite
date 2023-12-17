@@ -95,10 +95,12 @@ pub enum BlockItem {
 
 /// IV. Statements
 
-/// Stmt        ::= Assign | Return
+/// Stmt        ::= Assign | IdleExp | Block | Return
 #[derive(Debug)]
 pub enum Stmt {
     Assign(Assign),
+    IdleExp(IdleExp),
+    Block(Block),
     Return(Return),
 }
 
@@ -109,7 +111,13 @@ pub struct Assign {
     pub exp: Exp,
 }
 
-/// Return      ::= "return" Return ";";
+/// IdleExp     ::= [Exp] ";"
+#[derive(Debug)]
+pub struct IdleExp {
+    pub exp: Option<Exp>,
+}
+
+/// Return      ::= "return" Exp ";";
 #[derive(Debug)]
 pub struct Return {
     pub exp: Exp,

@@ -265,6 +265,8 @@ impl<'ast> IRGenerator<'ast> for Stmt {
     ) -> Result<Self::Ret, IRGenError> {
         let _ = match self {
             Self::Assign(assign) => assign.generate(program, scopes),
+            Self::IdleExp(exp) => exp.generate(program, scopes),
+            Self::Block(block) => block.generate(program, scopes),
             Self::Return(ret) => ret.generate(program, scopes),
         };
         Ok(())
@@ -293,6 +295,20 @@ impl<'ast> IRGenerator<'ast> for Assign {
         let info = scopes.mut_ref_curr_func().unwrap();
         let store = info.create_new_value(program).store(exp, lval);
         info.push_inst_curr_bblock(program, store);
+        Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for IdleExp {
+    type Ret = ();
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        if let Some(exp) = &self.exp {
+            exp.generate(program, scopes)?;
+        }
         Ok(())
     }
 }
