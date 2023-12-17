@@ -176,10 +176,7 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
             .dfg_mut()
             .new_bb()
             .basic_block(Some("%entry".to_string()));
-        let curr_block = data
-            .dfg_mut()
-            .new_bb()
-            .basic_block(None);
+        let curr_block = data.dfg_mut().new_bb().basic_block(None);
         let exit_block = data
             .dfg_mut()
             .new_bb()
@@ -319,6 +316,8 @@ impl<'ast> IRGenerator<'ast> for Return {
         info.push_inst_curr_bblock(program, store);
         let jump = info.create_new_value(program).jump(info.exit());
         info.push_inst_curr_bblock(program, jump);
+        let new_bblock = info.create_new_bblock(program, None);
+        info.push_bblock(program, new_bblock);
         Ok(())
     }
 }
