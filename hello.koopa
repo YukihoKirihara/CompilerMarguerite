@@ -4,30 +4,30 @@ fun @main(): i32 {
   jump %0
 
 %0:
-  br 0, %if_true, %if_false
+  @i = alloc i32
+  store 0, @i
+  jump %while_cond
 
-%if_true:
-  store 1, %ret
+%while_cond:
+  %1 = load @i
+  %2 = lt %1, 10
+  br %2, %while_body, %while_final
+
+%while_body:
+  %3 = load @i
+  %4 = add %3, 1
+  store %4, @i
+  jump %while_cond
+
+%while_final:
+  %5 = load @i
+  store %5, %ret
   jump %exit
 
-%1:
-  jump %if_final
-
-%if_false:
-  store 2, %ret
-  jump %exit
-
-%2:
-  jump %if_final
-
-%if_final:
-  store 3, %ret
-  jump %exit
-
-%3:
+%6:
   jump %exit
 
 %exit:
-  %4 = load %ret
-  ret %4
+  %7 = load %ret
+  ret %7
 }

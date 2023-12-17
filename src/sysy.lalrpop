@@ -99,6 +99,11 @@ MatchedStmt: Stmt = {
     "if" "(" <cond: Exp> ")" <true_stmt: MatchedStmt> "else" <false_stmt: MatchedStmt> => {
         Stmt::IfClause(IfClause{cond: cond, true_stmt: Box::new(true_stmt), false_stmt: Some(Box::new(false_stmt))})
     },
+    "while" "(" <cond: Exp> ")" <loop_stmt: MatchedStmt> => {
+        Stmt::WhileClause(WhileClause{cond: cond, loop_stmt: Box::new(loop_stmt)})
+    },
+    "break" ";" => Stmt::Break(Break{}),
+    "continue" ";" => Stmt::Continue(Continue{}),
     "return" <exp: Exp> ";" => Stmt::Return(Return { <> }),
 }
 
@@ -108,6 +113,9 @@ UnMatchedStmt: Stmt = {
     },
     "if" "(" <cond: Exp> ")" <true_stmt: MatchedStmt> "else" <false_stmt: UnMatchedStmt> => {
         Stmt::IfClause(IfClause{cond:cond, true_stmt: Box::new(true_stmt), false_stmt: Some(Box::new(false_stmt))})
+    },
+    "while" "(" <cond: Exp> ")" <loop_stmt: UnMatchedStmt> => {
+        Stmt::WhileClause(WhileClause{cond: cond, loop_stmt: Box::new(loop_stmt)})
     },
 }
 

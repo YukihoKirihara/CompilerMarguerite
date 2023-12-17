@@ -1,7 +1,7 @@
 use super::error::IRGenError;
 use super::function::FunctionInfo;
 use super::variable::Variable;
-use koopa::ir::Function;
+use koopa::ir::{BasicBlock, Function};
 use std::collections::HashMap;
 
 /// ScopeManager is a singleton to manage the scope of the CompUnit.
@@ -12,6 +12,9 @@ pub struct ScopeManager<'ast> {
     funcs: HashMap<&'ast str, Function>,
     /// FunctionInfo of the current function
     curr_func: Option<FunctionInfo>,
+    /// Stack of loops with the condition and final bblock
+    /// The condition bblock recorded for "continue" and the final bblock for "break", respectively.
+    loops_stack: Vec<(BasicBlock, BasicBlock)>,
 }
 
 impl<'ast> ScopeManager<'ast> {
@@ -21,6 +24,7 @@ impl<'ast> ScopeManager<'ast> {
             vals_stack: vec![HashMap::new()],
             funcs: HashMap::new(),
             curr_func: None,
+            loops_stack: Vec::new(),
         }
     }
 
@@ -84,5 +88,31 @@ impl<'ast> ScopeManager<'ast> {
             }
         }
         Err(IRGenError::IdentNotFound(ident.to_string()))
+    }
+
+    /// Enter a new loop
+    pub fn enter_loop(&mut self, cond_bblock: BasicBlock, final_bblock: BasicBlock) {
+        self.loops_stack.push((cond_bblock, final_bblock));
+    }
+
+    /// Exit the current loop
+    pub fn exit_loop(&mut self) {
+        self.loops_stack.pop();
+    }
+
+    /// Return the condition bblock of the current loop
+    pub fn get_curr_loop_cond_bblock(&self) -> Result<&BasicBlock, IRGenError> {
+        match self.loops_stack.last() {
+            Some((cond_bblock, _)) => Ok(cond_bblock),
+            None => Err(IRGenError::NotInALoop),
+        }
+    }
+
+    /// Return the final bblock of the current loop
+    pub fn get_curr_loop_final_bblock(&self) -> Result<&BasicBlock, IRGenError> {
+        match self.loops_stack.last() {
+            Some((_, final_bblock)) => Ok(final_bblock),
+            None => Err(IRGenError::NotInALoop),
+        }
     }
 }

@@ -1,8 +1,7 @@
 int main()
 {
-    if (0)
-        return 1;
-    else
-        return 2;
-    return 3;
+    int i = 0;
+    while (i < 10)
+        i = i + 1;
+    return i;
 }

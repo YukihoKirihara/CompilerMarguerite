@@ -95,13 +95,23 @@ pub enum BlockItem {
 
 /// IV. Statements
 
-/// Stmt        ::= Assign | IdleExp | Block | If | Return
+/// Stmt        ::= Assign
+///             | IdleExp
+///             | Block
+///             | IfClause
+///             | WhileClause
+///             | Break
+///             | Continue
+///             | Return
 #[derive(Debug)]
 pub enum Stmt {
     Assign(Assign),
     IdleExp(IdleExp),
     Block(Block),
     IfClause(IfClause),
+    WhileClause(WhileClause),
+    Continue(Continue),
+    Break(Break),
     Return(Return),
 }
 
@@ -125,6 +135,21 @@ pub struct IfClause {
     pub true_stmt: Box<Stmt>,
     pub false_stmt: Option<Box<Stmt>>,
 }
+
+/// WhileClause ::= "while" "(" Exp ")" Stmt
+#[derive(Debug)]
+pub struct WhileClause {
+    pub cond: Exp,
+    pub loop_stmt: Box<Stmt>,
+}
+
+/// Break       ::= "break" ";"
+#[derive(Debug)]
+pub struct Break {}
+
+/// Continue    ::= "continue" ";"
+#[derive(Debug)]
+pub struct Continue {}
 
 /// Return      ::= "return" Exp ";";
 #[derive(Debug)]

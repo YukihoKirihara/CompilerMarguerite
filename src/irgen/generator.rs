@@ -268,6 +268,9 @@ impl<'ast> IRGenerator<'ast> for Stmt {
             Self::IdleExp(exp) => exp.generate(program, scopes),
             Self::Block(block) => block.generate(program, scopes),
             Self::IfClause(if_clause) => if_clause.generate(program, scopes),
+            Self::WhileClause(while_clause) => while_clause.generate(program, scopes),
+            Self::Break(break_stmt) => break_stmt.generate(program, scopes),
+            Self::Continue(ctn_stmt) => ctn_stmt.generate(program, scopes),
             Self::Return(ret) => ret.generate(program, scopes),
         };
         Ok(())
@@ -352,6 +355,89 @@ impl<'ast> IRGenerator<'ast> for IfClause {
         let false_jump = info.create_new_value(program).jump(final_bblock);
         info.push_inst_curr_bblock(program, false_jump);
         info.push_bblock(program, final_bblock);
+        Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for WhileClause {
+    type Ret = ();
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        // Generate the bblock for while condition.
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let while_cond_bblock = info.create_new_bblock(program, Some("%while_cond"));
+        let start_jump = info.create_new_value(program).jump(while_cond_bblock);
+        info.push_inst_curr_bblock(program, start_jump);
+        info.push_bblock(program, while_cond_bblock);
+        // Go down the while condition expression.
+        let cond = self
+            .cond
+            .generate(program, scopes)
+            .unwrap()
+            .get_int_value(program, scopes)
+            .unwrap();
+        // Generate the bblocks for while body and while end.
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let while_body_bblock = info.create_new_bblock(program, Some("%while_body"));
+        let while_final_bblock = info.create_new_bblock(program, Some("%while_final"));
+        // Generate the branch instructions.
+        let branch =
+            info.create_new_value(program)
+                .branch(cond, while_body_bblock, while_final_bblock);
+        info.push_inst_curr_bblock(program, branch);
+        // Enter the while body.
+        info.push_bblock(program, while_body_bblock);
+        scopes.enter_loop(while_cond_bblock, while_final_bblock);
+        // Go down the statement of the body.
+        self.loop_stmt.generate(program, scopes)?;
+        // Exit the while body.
+        scopes.exit_loop();
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let back_jump = info.create_new_value(program).jump(while_cond_bblock);
+        info.push_inst_curr_bblock(program, back_jump);
+        // Place the final bblock.
+        info.push_bblock(program, while_final_bblock);
+        Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for Break {
+    type Ret = ();
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        let final_bblock = scopes.get_curr_loop_final_bblock().unwrap();
+        let info = scopes.ref_curr_func().unwrap();
+        let break_jump = info.create_new_value(program).jump(*final_bblock);
+        let info = scopes.mut_ref_curr_func().unwrap();
+        info.push_inst_curr_bblock(program, break_jump);
+        // Push a new bblock
+        let new_bblock = info.create_new_bblock(program, None);
+        info.push_bblock(program, new_bblock);
+        Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for Continue {
+    type Ret = ();
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        let cond_bblock = scopes.get_curr_loop_cond_bblock().unwrap();
+        let info = scopes.ref_curr_func().unwrap();
+        let continue_jump = info.create_new_value(program).jump(*cond_bblock);
+        let info = scopes.mut_ref_curr_func().unwrap();
+        info.push_inst_curr_bblock(program, continue_jump);
+        // Push a new bblock
+        let new_bblock = info.create_new_bblock(program, None);
+        info.push_bblock(program, new_bblock);
         Ok(())
     }
 }

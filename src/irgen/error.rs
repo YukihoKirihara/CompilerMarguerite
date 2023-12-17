@@ -7,6 +7,7 @@ pub enum IRGenError {
     DupIdent(String),
     IdentNotFound(String),
     NotAConstant(String),
+    NotInALoop,
     NotAPointer,
     ZeroDivider,
 }
@@ -30,6 +31,10 @@ impl Display for IRGenError {
                 f,
                 "The identifier '{}' does NOT match a constant variable.",
                 msg
+            ),
+            Self::NotInALoop => write!(
+                f,
+                "Statement 'continue' or 'break' occurs in places where NO loop exists."
             ),
             Self::NotAPointer => write!(f, "A integer value is mistaken for a pointer."),
             Self::ZeroDivider => write!(f, "Division or Modulo by zero."),
