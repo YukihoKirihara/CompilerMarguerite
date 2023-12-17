@@ -5,15 +5,24 @@ fun @main(): i32 {
 
 %curr:
   @x = alloc i32
-  store 1, @x
+  store 10, @x
   %0 = load @x
-  store %0, %ret
-  jump %exit
-  store 2, %ret
+  %1 = add %0, 1
+  @y = alloc i32
+  store %1, @y
+  %2 = load @x
+  %3 = load @y
+  %4 = mul %2, %3
+  %5 = add %4, 1
+  @z = alloc i32
+  store %5, @z
+  %6 = load @z
+  %7 = mod %6, 66
+  store %7, %ret
   jump %exit
   jump %exit
 
 %exit:
-  %1 = load %ret
-  ret %1
+  %8 = load %ret
+  ret %8
 }
