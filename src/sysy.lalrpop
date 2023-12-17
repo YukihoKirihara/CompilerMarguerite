@@ -2,58 +2,132 @@ use crate::ast::*;
 
 grammar;
 
+/// Lexical Analysis
 match {
-    // Ignore space and comment.
+    /// Ignore space and comment.
     r"\s*" => {},
     r"//[^\n\r]*[\n\r]*" => {},
     r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => {},
-    // Default
+    /// Default
     _
 }
 
+/// Syntax Analysis
+/// Compilation unit
 pub CompUnit: CompUnit = <func_def: FuncDef> => CompUnit{ <> };
 
+/// Declaration of variables
+Decl: Decl = {
+    ConstDecl => Decl::ConstDecl(<>),
+    VarDecl => Decl::VarDecl(<>),
+}
+
+/// Declaration of constant variables, with multiple case supported.
+ConstDecl: ConstDecl = {
+    "const" <btype: BType> <const_def0: ConstDef> <mut const_defs: ("," <ConstDef>)*> ";" => {
+        const_defs.insert(0, const_def0);
+        ConstDecl{btype, const_defs}
+    }
+}
+
+/// Type of variables
+BType: BType = "int" => BType::Int;
+
+/// Definition of constant variables, where the initial value is a must.
+ConstDef: ConstDef = {
+    <ident: Ident> "=" <const_init_val: ConstInitVal> => {
+        ConstDef{ident: ident, const_init_val: const_init_val}
+    }
+}
+
+/// Initial values of constant variables
+ConstInitVal: ConstInitVal = <const_exp: ConstExp> => ConstInitVal{ <> };
+
+/// Declaration of (mutable) variables, with multiple case supported.
+VarDecl: VarDecl = {
+    <btype: BType> <var_def0: VarDef> <mut var_defs: ("," <VarDef>)*> ";" => {
+        var_defs.insert(0, var_def0);
+        VarDecl{btype, var_defs}
+    }
+}
+
+/// Definition of (mutable) variables, where the initial value is optional.
+VarDef: VarDef = {
+    <ident: Ident> <init_val: ("=" <InitVal>)?> => {
+        VarDef{ident: ident, init_val: init_val}
+    }
+}
+
+/// Initial values of (mutable) variables.
+InitVal: InitVal = <exp: Exp> => InitVal{ <> };
+
+/// Definition of functions
 FuncDef: FuncDef = {
     <func_type: FuncType> <ident: Ident> "(" ")" <block: Block> => {
         FuncDef { <> }
     }
 }
 
+/// Return types of functions
 FuncType: FuncType = "int" => FuncType::Int;
 
-Block: Block = "{" <stmt: Stmt> "}" => Block { <> };
+/// The main body of functions
+Block: Block = "{" <block_items: (<BlockItem>)*> "}" => Block { <> };
 
-Stmt: Stmt = "return" <exp: Exp> ";" => Stmt::Return(Return { <> }); 
-
-Exp: Exp = <lor_exp: LOrExp> => Exp { <> };
-
-PrimaryExp: PrimaryExp = {
-    "(" <Exp> ")" => PrimaryExp::ParenExp(Box::new(<>)),
-    Number => PrimaryExp::Number(<>)
+/// Separate Units of Blocks
+BlockItem: BlockItem = {
+    Decl => BlockItem::Decl(<>),
+    Stmt => BlockItem::Stmt(<>),
 }
 
+/// Statements
+/// Assign: A statement of assignment.
+/// Return: A statement of return with some value.
+Stmt: Stmt = {
+    <lval: LVal> "=" <exp: Exp> ";" => Stmt::Assign(Assign { <> }),
+    "return" <exp: Exp> ";" => Stmt::Return(Return { <> }),
+}
+
+/// Expressions. 
+Exp: Exp = <lor_exp: LOrExp> => Exp { <> };
+
+/// Left values. Names (identifiers) of variables.
+LVal: LVal = <ident: Ident> => LVal { <> };
+
+/// Primary expressions. Parenthesized expressions, left values and numbers have the highest priority.
+PrimaryExp: PrimaryExp = {
+    "(" <Exp> ")" => PrimaryExp::ParenExp(Box::new(<>)),
+    LVal => PrimaryExp::LVal(<>),
+    Number => PrimaryExp::Number(<>),
+}
+
+/// Expressions with unary operator "+", "-" or "!".
 UnaryExp: UnaryExp = {
     PrimaryExp => UnaryExp::PrimaryExp(<>),
     "+" <UnaryExp> => <>,
-    <unary_op: UnaryOp> <unary_exp: UnaryExp> => UnaryExp::UnaryOpExp(unary_op, Box::new(unary_exp))
+    <unary_op: UnaryOp> <unary_exp: UnaryExp> => UnaryExp::UnaryOpExp(unary_op, Box::new(unary_exp)),
 }
 
+/// Unary operators.
 UnaryOp: UnaryOp = {
     "-" => UnaryOp::Neg,
     "!" => UnaryOp::Not,
 }
 
+/// Expressions with binary operator "*", "/" or "%". 
 MulExp: MulExp = {
     UnaryExp => MulExp::UnaryExp(<>),
     <mul_exp: MulExp> <mul_op: MulOp> <unary_exp: UnaryExp> => MulExp::MulUnaryExp(Box::new(mul_exp), mul_op, unary_exp),
 }
 
+/// Multiplication-level operators.
 MulOp : MulOp = {
     "*" => MulOp::Mul,
     "/" => MulOp::Div,
     "%" => MulOp::Mod,
 }
 
+/// Expressions with binary operator "+" or "-".
 AddExp: AddExp = {
     MulExp => AddExp::MulExp(<>),
     <add_exp: AddExp> <add_op: AddOp> <mul_exp: MulExp> => {
@@ -61,11 +135,13 @@ AddExp: AddExp = {
     },
 }
 
+/// Addition-level operators.
 AddOp: AddOp = {
     "+" => AddOp::Add,
     "-" => AddOp::Sub,
 }
 
+/// Expressions with comparison operator "<", ">", "<=" or ">=".
 RelExp: RelExp = {
     AddExp => RelExp::AddExp(<>),
     <rel_exp: RelExp> <rel_op: RelOp> <add_exp: AddExp> => {
@@ -73,6 +149,7 @@ RelExp: RelExp = {
     },
 }
 
+/// Comparison operators.
 RelOp: RelOp = {
     "<" => RelOp::LT,
     ">" => RelOp::GT,
@@ -80,6 +157,7 @@ RelOp: RelOp = {
     ">=" => RelOp::GE,
 }
 
+/// Expressions with equality comparison operator "==" or "!=".
 EqExp: EqExp = {
     RelExp => EqExp::RelExp(<>),
     <eq_exp: EqExp> <eq_op: EqOp> <rel_exp: RelExp> => {
@@ -87,11 +165,13 @@ EqExp: EqExp = {
     },
 }
 
+/// Equality comparison operators.
 EqOp: EqOp = {
     "==" => EqOp::Eq,
     "!=" => EqOp::Neq,
 }
 
+/// Expressions with logical operator "&&".
 LAndExp: LAndExp = {
     EqExp => LAndExp::EqExp(<>),
     <land_exp: LAndExp> "&&" <eq_exp: EqExp> => {
@@ -99,6 +179,7 @@ LAndExp: LAndExp = {
     },
 }
 
+/// Expressions with logical operator "||".
 LOrExp: LOrExp = {
     LAndExp => LOrExp::LAndExp(<>),
     <lor_exp: LOrExp> "||" <land_exp: LAndExp> => {
@@ -106,7 +187,10 @@ LOrExp: LOrExp = {
     },
 }
 
+/// Constant expressions
+ConstExp: ConstExp = <exp: Exp> => ConstExp{ <> };
 
+/// Terminals
 Number: i32 = <num: IntConst> => <>;
 
 Ident: String = r"[_a-zA-Z][_a-zA-Z0-9]*" => <>.to_string();

@@ -1,12 +1,13 @@
+use super::error::IRGenError;
 use super::function::FunctionInfo;
-use super::value::Value;
+use super::variable::Variable;
 use koopa::ir::Function;
 use std::collections::HashMap;
 
 /// ScopeManager is a singleton to manage the scope of the CompUnit.
 pub struct ScopeManager<'ast> {
-    /// Stack of values of different scopes
-    vals_stack: Vec<HashMap<&'ast str, Value>>,
+    /// Stack of variables of different scopes
+    vals_stack: Vec<HashMap<&'ast str, Variable>>,
     /// Functions in the CompUnit
     funcs: HashMap<&'ast str, Function>,
     /// FunctionInfo of the current function
@@ -23,8 +24,13 @@ impl<'ast> ScopeManager<'ast> {
         }
     }
 
+    /// Checks whether the current Scope is global
+    pub fn is_global(&self) -> bool {
+        self.curr_func.is_none()
+    }
+
     /// Add a new function to current Scope
-    pub fn new_func(&mut self, id: &'ast str, func: Function) -> Result<(), ()> {
+    pub fn new_func(&mut self, id: &'ast str, func: Function) -> Result<(), IRGenError> {
         self.funcs.insert(id, func);
         Ok(())
     }
@@ -52,5 +58,31 @@ impl<'ast> ScopeManager<'ast> {
     /// Close the current scope
     pub fn close(&mut self) -> () {
         self.vals_stack.pop();
+    }
+
+    /// Create a new (constant or mutable) variable in current scope
+    pub fn create_new_variable(
+        &mut self,
+        ident: &'ast str,
+        var: Variable,
+    ) -> Result<(), IRGenError> {
+        let is_global = self.is_global();
+        let curr_vals_stack = self.vals_stack.last_mut().unwrap();
+        if curr_vals_stack.contains_key(ident) || (is_global && self.funcs.contains_key(ident)) {
+            Err(IRGenError::DupIdent(ident.to_string()))
+        } else {
+            curr_vals_stack.insert(ident, var);
+            Ok(())
+        }
+    }
+
+    /// Return the value of a variable
+    pub fn load_variable(&self, ident: &'ast str) -> Result<&Variable, IRGenError> {
+        for vals in self.vals_stack.iter().rev() {
+            if let Some(var) = vals.get(ident) {
+                return Ok(var);
+            }
+        }
+        Err(IRGenError::IdentNotFound(ident.to_string()))
     }
 }

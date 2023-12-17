@@ -1,78 +1,166 @@
+/// Definition of Nodes in the Abstract Syntax Tree (AST)
 /// Detailed Context Free Grammar rules are in sysy.lalrpop
 
-#[derive(Debug)]
+/// I. Compilation Unit
+
 /// CompUnit    ::= FuncDef;
+#[derive(Debug)]
 pub struct CompUnit {
     pub func_def: FuncDef,
 }
 
+/// II. Declaration of variables
+
+/// Decl        ::= ConstDecl | VarDecl;
 #[derive(Debug)]
+pub enum Decl {
+    ConstDecl(ConstDecl),
+    VarDecl(VarDecl),
+}
+
+/// ConstDecl   ::= "const" BType ConstDef {"," ConstDef} ";";
+#[derive(Debug)]
+pub struct ConstDecl {
+    pub btype: BType,
+    pub const_defs: Vec<ConstDef>,
+}
+
+/// BType       ::= "int";
+#[derive(Debug)]
+pub enum BType {
+    Int,
+}
+
+/// ConstDef    ::= IDENT "=" ConstInitVal;
+#[derive(Debug)]
+pub struct ConstDef {
+    pub ident: String,
+    pub const_init_val: ConstInitVal,
+}
+
+/// ConstInitVal    ::= ConstExp;
+#[derive(Debug)]
+pub struct ConstInitVal {
+    pub const_exp: ConstExp,
+}
+
+/// VarDecl     ::= BType VarDef {"," VarDef} ";";
+#[derive(Debug)]
+pub struct VarDecl {
+    pub btype: BType,
+    pub var_defs: Vec<VarDef>,
+}
+
+/// VarDef      ::= IDENT | IDENT "=" InitVal;
+#[derive(Debug)]
+pub struct VarDef {
+    pub ident: String,
+    pub init_val: Option<InitVal>,
+}
+
+/// InitVal     ::= Exp;
+#[derive(Debug)]
+pub struct InitVal {
+    pub exp: Exp,
+}
+
+/// III. Function Structures
+
 /// FuncDef     ::= FuncType IDENT "(" ")" Block;
+#[derive(Debug)]
 pub struct FuncDef {
     pub func_type: FuncType,
     pub ident: String,
     pub block: Block,
 }
 
-#[derive(Debug)]
 /// FuncType    ::= "int";
+#[derive(Debug)]
 pub enum FuncType {
     Int,
 }
 
+/// Block       ::= "{" { BlockItem} "}";
 #[derive(Debug)]
-/// Block       ::= "{" Stmt "}";
 pub struct Block {
-    pub stmt: Stmt,
+    pub block_items: Vec<BlockItem>,
 }
 
+/// BlockItem   ::= Decl | Stmt;
 #[derive(Debug)]
-/// Stmt        ::= Return;
+pub enum BlockItem {
+    Decl(Decl),
+    Stmt(Stmt),
+}
+
+/// IV. Statements
+
+/// Stmt        ::= Assign | Return
+#[derive(Debug)]
 pub enum Stmt {
+    Assign(Assign),
     Return(Return),
 }
 
+/// Assign      ::= LVal "=" Exp ";";
 #[derive(Debug)]
-/// Return        ::= "return" Return ";";
+pub struct Assign {
+    pub lval: LVal,
+    pub exp: Exp,
+}
+
+/// Return      ::= "return" Return ";";
+#[derive(Debug)]
 pub struct Return {
     pub exp: Exp,
 }
 
-#[derive(Debug)]
+/// V. Expressions
+
 /// Exp         ::= LOrExp;
+#[derive(Debug)]
 pub struct Exp {
     pub lor_exp: LOrExp,
 }
 
+/// LVal        ::= IDENT;
 #[derive(Debug)]
-/// PrimaryExp  ::= "(" Exp ")" | Number;
-/// Number      ::= INT_CONST;
-pub enum PrimaryExp {
-    Number(i32),
-    ParenExp(Box<Exp>),
+pub struct LVal {
+    pub ident: String,
 }
 
+/// PrimaryExp  ::= "(" Exp ")" | LVal | Number;
+/// Number      ::= INT_CONST;
 #[derive(Debug)]
+pub enum PrimaryExp {
+    ParenExp(Box<Exp>),
+    LVal(LVal),
+    Number(i32),
+}
+
 /// UnaryExp    ::= PrimaryExp | UnaryOp UnaryExp;
+#[derive(Debug)]
 pub enum UnaryExp {
     PrimaryExp(PrimaryExp),
     UnaryOpExp(UnaryOp, Box<UnaryExp>),
 }
 
-#[derive(Debug)]
 /// UnaryOp     ::= "+" | "-" | "!";
+/// "+" (Positive) is neglected as an identical operator.
+#[derive(Debug)]
 pub enum UnaryOp {
     Neg,
     Not,
 }
 
+/// MulExp      ::= UnaryExp | MulExp MulOp UnaryExp;
 #[derive(Debug)]
-/// MulExp      ::= UnaryExp | MulExp ("*" | "/" | "%") UnaryExp;
 pub enum MulExp {
     UnaryExp(UnaryExp),
     MulUnaryExp(Box<MulExp>, MulOp, UnaryExp),
 }
 
+/// MulOp       ::= "*" | "/" | "%"
 #[derive(Debug)]
 pub enum MulOp {
     Mul,
@@ -80,26 +168,28 @@ pub enum MulOp {
     Mod,
 }
 
+/// AddExp      ::= MulExp | AddExp AddOp MulExp;
 #[derive(Debug)]
-/// AddExp      ::= MulExp | AddExp ("+" | "-") MulExp;
 pub enum AddExp {
     MulExp(MulExp),
     AddMulExp(Box<AddExp>, AddOp, MulExp),
 }
 
+/// AddOp       ::= "+" | "-"
 #[derive(Debug)]
 pub enum AddOp {
     Add,
     Sub,
 }
 
+/// RelExp      ::= AddExp | RelExp RelOp AddExp;
 #[derive(Debug)]
-/// RelExp      ::= AddExp | RelExp ("<" | ">" | "<=" | ">=") AddExp;
 pub enum RelExp {
     AddExp(AddExp),
     RelAddExp(Box<RelExp>, RelOp, AddExp),
 }
 
+/// RelOp       ::= "<" | ">" | "<=" | ">="
 #[derive(Debug)]
 pub enum RelOp {
     LT,
@@ -108,29 +198,36 @@ pub enum RelOp {
     GE,
 }
 
+/// EqExp       ::= RelExp | EqExp EqOp RelExp;
 #[derive(Debug)]
-/// EqExp       ::= RelExp | EqExp ("==" | "!=") RelExp;
 pub enum EqExp {
     RelExp(RelExp),
     EqRelExp(Box<EqExp>, EqOp, RelExp),
 }
 
+/// EqOp        ::= "==" | "!="
 #[derive(Debug)]
 pub enum EqOp {
     Eq,
     Neq,
 }
 
-#[derive(Debug)]
 /// LAndExp     ::= EqExp | LAndExp "&&" EqExp;
+#[derive(Debug)]
 pub enum LAndExp {
     EqExp(EqExp),
     LAndEqExp(Box<LAndExp>, EqExp),
 }
 
-#[derive(Debug)]
 /// LOrExp      ::= LAndExp | LOrExp "||" LAndExp;
+#[derive(Debug)]
 pub enum LOrExp {
     LAndExp(LAndExp),
     LOrAndExp(Box<LOrExp>, LAndExp),
+}
+
+/// ConstExp    ::= Exp;
+#[derive(Debug)]
+pub struct ConstExp {
+    pub exp: Exp,
 }
