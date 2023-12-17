@@ -171,11 +171,19 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
         let params_type: Vec<Type> = Vec::new();
         // Create the new function
         let mut data = FunctionData::new(format!("@{}", self.ident), params_type, ret_type);
-        // Generate the entry block
+        // Generate the entry, exit and current blocks
         let entry_block = data
             .dfg_mut()
             .new_bb()
             .basic_block(Some("%entry".to_string()));
+        let curr_block = data
+            .dfg_mut()
+            .new_bb()
+            .basic_block(Some("%curr".to_string()));
+        let exit_block = data
+            .dfg_mut()
+            .new_bb()
+            .basic_block(Some("%exit".to_string()));
         // Genereate the return value
         let alloc = data.dfg_mut().new_value().alloc(Type::get_i32());
         data.dfg_mut()
@@ -184,9 +192,12 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
 
         // Generate the FunctionInfo
         let func = program.new_func(data);
-        let mut info = FunctionInfo::new(func, entry_block, ret_val);
+        let mut info = FunctionInfo::new(func, entry_block, exit_block, ret_val);
         info.push_bblock(program, entry_block);
         info.push_inst_curr_bblock(program, ret_val.unwrap());
+        info.push_bblock(program, curr_block);
+        let jump = info.create_new_value(program).jump(curr_block);
+        info.push_inst(program, entry_block, jump);
 
         // Maintain the scopes, and go down the AST
         scopes.open();
@@ -306,6 +317,8 @@ impl<'ast> IRGenerator<'ast> for Return {
         let ret_val = info.ret_val().unwrap();
         let store = info.create_new_value(program).store(value, ret_val);
         info.push_inst_curr_bblock(program, store);
+        let jump = info.create_new_value(program).jump(info.exit());
+        info.push_inst_curr_bblock(program, jump);
         Ok(())
     }
 }

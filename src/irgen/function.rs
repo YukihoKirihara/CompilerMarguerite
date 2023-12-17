@@ -5,16 +5,23 @@ use koopa::ir::{BasicBlock, Function, Program};
 pub struct FunctionInfo {
     func: Function,
     entry: BasicBlock,
+    exit: BasicBlock,
     curr: BasicBlock,
     ret_val: Option<Value>,
 }
 
 impl FunctionInfo {
     /// Create a new FunctionInfo
-    pub fn new(func: Function, entry: BasicBlock, ret_val: Option<Value>) -> Self {
+    pub fn new(
+        func: Function,
+        entry: BasicBlock,
+        exit: BasicBlock,
+        ret_val: Option<Value>,
+    ) -> Self {
         Self {
             func,
             entry,
+            exit,
             curr: entry,
             ret_val,
         }
@@ -28,6 +35,11 @@ impl FunctionInfo {
     /// Return the entry block
     pub fn entry(&self) -> BasicBlock {
         self.entry
+    }
+
+    /// Return the exit block
+    pub fn exit(&self) -> BasicBlock {
+        self.exit
     }
 
     /// Return the current block
@@ -82,11 +94,17 @@ impl FunctionInfo {
         self.push_inst(program, bb, inst);
     }
 
-    // Construct the end of the function
+    /// Construct the end of the function
     pub fn conclude_func(&mut self, program: &mut Program) -> () {
-        let value = self.create_new_value(program).load(self.ret_val.unwrap());
-        self.push_inst(program, self.entry, value);
-        let ret = self.create_new_value(program).ret(Some(value));
-        self.push_inst(program, self.entry, ret)
+        // Jump to the exit bblock
+        let jump = self.create_new_value(program).jump(self.exit);
+        self.push_inst_curr_bblock(program, jump);
+        // Push the exit bblock
+        self.push_bblock(program, self.exit);
+        // Generate return instructions
+        let load = self.create_new_value(program).load(self.ret_val.unwrap());
+        self.push_inst_curr_bblock(program, load);
+        let ret = self.create_new_value(program).ret(Some(load));
+        self.push_inst_curr_bblock(program, ret);
     }
 }
