@@ -1,3 +1,5 @@
+global @x = alloc i32, 1
+
 decl @getint(): i32
 
 decl @getch(): i32
@@ -14,21 +16,18 @@ decl @starttime()
 
 decl @stoptime()
 
-fun @f(): i32 {
+fun @f() {
 %entry:
-  %ret = alloc i32
   jump %0
 
 %0:
-  store 0, %ret
-  jump %exit
-
-%1:
+  %1 = load @x
+  %2 = add %1, 1
+  store %2, @x
   jump %exit
 
 %exit:
-  %2 = load %ret
-  ret %2
+  ret
 }
 
 fun @main(): i32 {
@@ -37,7 +36,13 @@ fun @main(): i32 {
   jump %3
 
 %3:
-  %4 = call @f()
+  call @f()
+  call @f()
+  call @f()
+  call @f()
+  call @f()
+  call @f()
+  %4 = load @x
   store %4, %ret
   jump %exit
 

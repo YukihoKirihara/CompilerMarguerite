@@ -249,7 +249,12 @@ impl<'ast> IRGenerator<'ast> for InitVal {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        self.exp.generate(program, scopes)
+        if scopes.is_global() {
+            let num = self.exp.rval_calc(scopes).unwrap();
+            Ok(ExpValue::Int(program.new_value().integer(num)))
+        } else {
+            self.exp.generate(program, scopes)
+        }
     }
 }
 

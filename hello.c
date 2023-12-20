@@ -1,9 +1,17 @@
-int f()
+int x = 1;
+const int y = 2;
+void f()
 {
-    return 0;
+    x = x + 1;
 }
 
 int main()
 {
-    return f();
+    f();
+    f();
+    f();
+    f();
+    f();
+    f();
+    return x;
 }
