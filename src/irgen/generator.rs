@@ -1,3 +1,5 @@
+use std::vec;
+
 use super::error::IRGenError;
 use super::exp_value::ExpValue;
 use super::function::FunctionInfo;
@@ -6,7 +8,7 @@ use super::scope_manager::ScopeManager;
 use super::variable::Variable;
 use crate::ast::*;
 use koopa::ir::builder_traits::*;
-use koopa::ir::{BinaryOp, FunctionData, Program, Type};
+use koopa::ir::{BinaryOp, FunctionData, Program, Type, TypeKind};
 
 pub trait IRGenerator<'ast> {
     type Ret;
@@ -24,8 +26,97 @@ impl<'ast> IRGenerator<'ast> for CompUnit {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        self.func_def.generate(program, scopes)?;
+        // Pre-declare all SysY library functions:
+        // decl @getint(): i32
+        // decl @getch(): i32
+        // decl @getarray(*i32): i32
+        // decl @putint(i32)
+        // decl @putch(i32)
+        // decl @putarray(i32, *i32)
+        // decl @starttime()
+        // decl @stoptime()
+        scopes.new_func(
+            "getint",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "getint"),
+                vec![],
+                Type::get_i32(),
+            )),
+        )?;
+        scopes.new_func(
+            "getch",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "getch"),
+                vec![],
+                Type::get_i32(),
+            )),
+        )?;
+        scopes.new_func(
+            "getarray",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "getarray"),
+                vec![Type::get_pointer(Type::get_i32())],
+                Type::get_i32(),
+            )),
+        )?;
+        scopes.new_func(
+            "putint",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "putint"),
+                vec![Type::get_i32()],
+                Type::get_unit(),
+            )),
+        )?;
+        scopes.new_func(
+            "putch",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "putch"),
+                vec![Type::get_i32()],
+                Type::get_unit(),
+            )),
+        )?;
+        scopes.new_func(
+            "putarray",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "putarray"),
+                vec![Type::get_i32(), Type::get_pointer(Type::get_i32())],
+                Type::get_unit(),
+            )),
+        )?;
+        scopes.new_func(
+            "starttime",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "starttime"),
+                vec![],
+                Type::get_unit(),
+            )),
+        )?;
+        scopes.new_func(
+            "stoptime",
+            program.new_func(FunctionData::new_decl(
+                format!("@{}", "stoptime"),
+                vec![],
+                Type::get_unit(),
+            )),
+        )?;
+        for items in &self.global_items {
+            items.generate(program, scopes)?;
+        }
         Ok(())
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for GlobalItem {
+    type Ret = ();
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        match self {
+            Self::Decl(decl) => decl.generate(program, scopes),
+            Self::FuncDef(func_def) => func_def.generate(program, scopes),
+        }
     }
 }
 
@@ -54,19 +145,6 @@ impl<'ast> IRGenerator<'ast> for ConstDecl {
             const_def.generate(program, scopes)?;
         }
         Ok(())
-    }
-}
-
-impl<'ast> IRGenerator<'ast> for BType {
-    type Ret = Type;
-    fn generate(
-        &'ast self,
-        _program: &mut Program,
-        _scopes: &mut ScopeManager<'ast>,
-    ) -> Result<Self::Ret, IRGenError> {
-        match self {
-            Self::Int => Ok(Type::get_i32()),
-        }
     }
 }
 
@@ -132,17 +210,32 @@ impl<'ast> IRGenerator<'ast> for VarDef {
             None
         };
         // Generate the variable.
-        let info = scopes.mut_ref_curr_func().unwrap();
-        let alloc = info.create_new_value(program).alloc(Type::get_i32());
-        program
-            .func_mut(info.func())
-            .dfg_mut()
-            .set_value_name(alloc, Some(format!("@{}", self.ident)));
-        info.push_inst_curr_bblock(program, alloc);
-        if rvalue.is_some() {
-            let store = info.create_new_value(program).store(rvalue.unwrap(), alloc);
-            info.push_inst_curr_bblock(program, store);
-        }
+        // Global case
+        let alloc = if scopes.is_global() {
+            let init = match rvalue {
+                Some(value) => value,
+                None => program.new_value().zero_init(Type::get_i32()),
+            };
+            let global_alloc = program.new_value().global_alloc(init);
+            program.set_value_name(global_alloc, Some(format!("@{}", self.ident)));
+            global_alloc
+        } else {
+            // Local case
+            let info = scopes.mut_ref_curr_func().unwrap();
+            let local_alloc = info.create_new_value(program).alloc(Type::get_i32());
+            program
+                .func_mut(info.func())
+                .dfg_mut()
+                .set_value_name(local_alloc, Some(format!("@{}", self.ident)));
+            info.push_inst_curr_bblock(program, local_alloc);
+            if rvalue.is_some() {
+                let store = info
+                    .create_new_value(program)
+                    .store(rvalue.unwrap(), local_alloc);
+                info.push_inst_curr_bblock(program, store);
+            }
+            local_alloc
+        };
         let var = Variable::Value(alloc);
         scopes.create_new_variable(&self.ident, var)?;
         Ok(())
@@ -167,10 +260,15 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
+        // Generate the types of formal parameters and return value.
+        let mut params_type = vec![];
+        for func_fparam in &self.func_fparams {
+            params_type.push(func_fparam.generate(program, scopes).unwrap());
+        }
         let ret_type = self.func_type.generate(program, scopes)?;
-        let params_type: Vec<Type> = Vec::new();
         // Create the new function
         let mut data = FunctionData::new(format!("@{}", self.ident), params_type, ret_type);
+        let params = data.params().to_owned();
         // Generate the entry, exit and current blocks
         let entry_block = data
             .dfg_mut()
@@ -182,22 +280,40 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
             .new_bb()
             .basic_block(Some("%exit".to_string()));
         // Genereate the return value
-        let alloc = data.dfg_mut().new_value().alloc(Type::get_i32());
-        data.dfg_mut()
-            .set_value_name(alloc, Some("%ret".to_string()));
-        let ret_val = Some(alloc);
-
+        let ret_val = match self.func_type {
+            FuncType::Void => None,
+            FuncType::Int => {
+                let alloc = data.dfg_mut().new_value().alloc(Type::get_i32());
+                data.dfg_mut()
+                    .set_value_name(alloc, Some("%ret".to_string()));
+                Some(alloc)
+            }
+        };
         // Generate the FunctionInfo
         let func = program.new_func(data);
         let mut info = FunctionInfo::new(func, entry_block, exit_block, ret_val);
         info.push_bblock(program, entry_block);
-        info.push_inst_curr_bblock(program, ret_val.unwrap());
+        if ret_val.is_some() {
+            info.push_inst_curr_bblock(program, ret_val.unwrap());
+        }
         info.push_bblock(program, curr_block);
         let jump = info.create_new_value(program).jump(curr_block);
         info.push_inst(program, entry_block, jump);
 
         // Maintain the scopes, and go down the AST
         scopes.open();
+        // Allocate and store the input parameters
+        for (fparam, rparam) in self.func_fparams.iter().zip(params) {
+            let alloc = info.create_new_value(program).alloc(Type::get_i32());
+            program
+                .func_mut(func)
+                .dfg_mut()
+                .set_value_name(alloc, Some(format!("@{}", fparam.ident)));
+            info.push_inst(program, entry_block, alloc);
+            let store = info.create_new_value(program).store(rparam, alloc);
+            info.push_inst_curr_bblock(program, store);
+            scopes.create_new_variable(&fparam.ident, Variable::Value(alloc))?;
+        }
         scopes.new_func(&self.ident, func)?;
         scopes.set_curr_func(info);
         self.block.generate(program, scopes)?;
@@ -218,8 +334,20 @@ impl<'ast> IRGenerator<'ast> for FuncType {
         _scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
         match self {
+            Self::Void => Ok(Type::get_unit()),
             Self::Int => Ok(Type::get_i32()),
         }
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for FuncFParam {
+    type Ret = Type;
+    fn generate(
+        &'ast self,
+        _program: &mut Program,
+        _scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        Ok(Type::get_i32())
     }
 }
 
@@ -525,6 +653,7 @@ impl<'ast> IRGenerator<'ast> for UnaryExp {
     ) -> Result<Self::Ret, IRGenError> {
         match self {
             UnaryExp::PrimaryExp(pri_exp) => pri_exp.generate(program, scopes),
+            UnaryExp::FuncExp(func_exp) => func_exp.generate(program, scopes),
             UnaryExp::UnaryOpExp(unary_op, pri_exp) => {
                 let rhs = pri_exp
                     .generate(program, scopes)
@@ -539,6 +668,62 @@ impl<'ast> IRGenerator<'ast> for UnaryExp {
                 Ok(ExpValue::Int(value))
             }
         }
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for FuncExp {
+    type Ret = ExpValue;
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        // Generate the real parameters
+        let mut rparams = vec![];
+        for rparam in &self.func_rparams {
+            rparams.push(
+                rparam
+                    .generate(program, scopes)
+                    .unwrap()
+                    .get_int_value(program, scopes)
+                    .unwrap(),
+            );
+        }
+        // Load the function, its formal parameters and its return value
+        let func = scopes.load_function(&self.ident).unwrap();
+        let (fparams_type, ret_val) = match program.func(func).ty().kind() {
+            TypeKind::Function(params, ret_val) => (params.clone(), ret_val.clone()),
+            _ => unreachable!(),
+        };
+        // Checks that the formal and real parameters are correspondent
+        if fparams_type.len() != rparams.len() {
+            return Err(IRGenError::UnmathedParams(self.ident.to_string()));
+        }
+        for (fparam_type, rparam) in fparams_type.iter().zip(&rparams) {
+            if *fparam_type != scopes.get_value_type(program, *rparam) {
+                return Err(IRGenError::UnmathedParams(self.ident.to_string()));
+            }
+        }
+        // Generate the call instruction
+        let info = scopes.mut_ref_curr_func().unwrap();
+        let call = info.create_new_value(program).call(func, rparams);
+        info.push_inst_curr_bblock(program, call);
+        if ret_val.is_i32() {
+            Ok(ExpValue::Int(call))
+        } else {
+            Ok(ExpValue::Void)
+        }
+    }
+}
+
+impl<'ast> IRGenerator<'ast> for FuncRParam {
+    type Ret = ExpValue;
+    fn generate(
+        &'ast self,
+        program: &mut Program,
+        scopes: &mut ScopeManager<'ast>,
+    ) -> Result<Self::Ret, IRGenError> {
+        self.exp.generate(program, scopes)
     }
 }
 

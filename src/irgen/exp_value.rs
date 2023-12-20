@@ -5,6 +5,7 @@ use koopa::ir::entities::{Program, Value};
 
 /// Expression value of different types
 pub enum ExpValue {
+    Void,
     Int(Value),
     IntPtr(Value),
 }
@@ -16,6 +17,7 @@ impl ExpValue {
         scopes: &mut ScopeManager,
     ) -> Result<Value, IRGenError> {
         match self {
+            Self::Void => Err(IRGenError::VoidValue),
             Self::Int(value) => Ok(value),
             Self::IntPtr(ptr) => {
                 let info = scopes.mut_ref_curr_func().unwrap();
@@ -27,6 +29,7 @@ impl ExpValue {
     }
     pub fn get_int_ptr(self) -> Result<Value, IRGenError> {
         match self {
+            Self::Void => Err(IRGenError::VoidValue),
             Self::Int(_) => Err(IRGenError::NotAPointer),
             Self::IntPtr(ptr) => Ok(ptr),
         }

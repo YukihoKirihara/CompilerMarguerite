@@ -27,7 +27,7 @@ impl FunctionInfo {
         }
     }
 
-    /// Return the current function
+    /// Return the Function structure
     pub fn func(&self) -> Function {
         self.func
     }
@@ -102,9 +102,15 @@ impl FunctionInfo {
         // Push the exit bblock
         self.push_bblock(program, self.exit);
         // Generate return instructions
-        let load = self.create_new_value(program).load(self.ret_val.unwrap());
-        self.push_inst_curr_bblock(program, load);
-        let ret = self.create_new_value(program).ret(Some(load));
+        let ret_val_opt = match self.ret_val() {
+            Some(value) => {
+                let load = self.create_new_value(program).load(value);
+                self.push_inst_curr_bblock(program, load);
+                Some(load)
+            }
+            None => None,
+        };
+        let ret = self.create_new_value(program).ret(ret_val_opt);
         self.push_inst_curr_bblock(program, ret);
     }
 }

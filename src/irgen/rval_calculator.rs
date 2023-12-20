@@ -37,6 +37,9 @@ impl<'exp> RValCalculator<'exp> for UnaryExp {
     fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::PrimaryExp(exp) => exp.rval_calc(scopes),
+            Self::FuncExp(func_exp) => {
+                Err(IRGenError::NotAConstant(func_exp.ident.clone().to_string()))
+            }
             Self::UnaryOpExp(unary_op, exp) => {
                 let exp_val = exp.rval_calc(scopes).unwrap();
                 match unary_op {

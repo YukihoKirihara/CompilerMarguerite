@@ -14,7 +14,13 @@ match {
 
 /// Syntax Analysis
 /// Compilation unit
-pub CompUnit: CompUnit = <func_def: FuncDef> => CompUnit{ <> };
+pub CompUnit: CompUnit = <global_items: (GlobalItem)*> => CompUnit{ <> };
+
+/// Global Item
+pub GlobalItem: GlobalItem = {
+    Decl => GlobalItem::Decl(<>),
+    FuncDef => GlobalItem::FuncDef(<>),
+}
 
 /// Declaration of variables
 Decl: Decl = {
@@ -24,14 +30,11 @@ Decl: Decl = {
 
 /// Declaration of constant variables, with multiple case supported.
 ConstDecl: ConstDecl = {
-    "const" <btype: BType> <const_def0: ConstDef> <mut const_defs: ("," <ConstDef>)*> ";" => {
+    "const" "int" <const_def0: ConstDef> <mut const_defs: ("," <ConstDef>)*> ";" => {
         const_defs.insert(0, const_def0);
-        ConstDecl{btype, const_defs}
+        ConstDecl{const_defs}
     }
 }
-
-/// Type of variables
-BType: BType = "int" => BType::Int;
 
 /// Definition of constant variables, where the initial value is a must.
 ConstDef: ConstDef = {
@@ -45,9 +48,9 @@ ConstInitVal: ConstInitVal = <const_exp: ConstExp> => ConstInitVal{ <> };
 
 /// Declaration of (mutable) variables, with multiple case supported.
 VarDecl: VarDecl = {
-    <btype: BType> <var_def0: VarDef> <mut var_defs: ("," <VarDef>)*> ";" => {
+    "int" <var_def0: VarDef> <mut var_defs: ("," <VarDef>)*> ";" => {
         var_defs.insert(0, var_def0);
-        VarDecl{btype, var_defs}
+        VarDecl{var_defs}
     }
 }
 
@@ -63,13 +66,24 @@ InitVal: InitVal = <exp: Exp> => InitVal{ <> };
 
 /// Definition of functions
 FuncDef: FuncDef = {
-    <func_type: FuncType> <ident: Ident> "(" ")" <block: Block> => {
-        FuncDef { <> }
+    <func_prefix: FuncPrefix> ")" <block: Block> => {
+        FuncDef {func_type: func_prefix.0, func_fparams: Vec::new(), ident: func_prefix.1, block: block}
+    },
+    <func_prefix: FuncPrefix> <func_fparam0: FuncFParam> <mut func_fparams: ("," <FuncFParam>)*> ")" <block: Block> => {
+        func_fparams.insert(0, func_fparam0);
+        FuncDef {func_type: func_prefix.0, func_fparams: func_fparams, ident: func_prefix.1, block: block}
     }
 }
 
-/// Return types of functions
-FuncType: FuncType = "int" => FuncType::Int;
+/// Prefix of Definition of functions, in avoidance of conflict.
+/// Function types of functions
+FuncPrefix: (FuncType, String) = {
+    "void" <ident: Ident> "(" => (FuncType::Void, <>),
+    "int" <ident: Ident> "(" => (FuncType::Int, <>),
+}
+
+/// Formal parameter of functions
+FuncFParam: FuncFParam = "int" <ident: Ident> => FuncFParam{ident: ident};
 
 /// The main body of functions
 Block: Block = "{" <block_items: (<BlockItem>)*> "}" => Block { <> };
@@ -132,12 +146,21 @@ PrimaryExp: PrimaryExp = {
     Number => PrimaryExp::Number(<>),
 }
 
-/// Expressions with unary operator "+", "-" or "!".
+/// Expressions with unary operator "+", "-" or "!". 
+/// Expressions of function calls.
 UnaryExp: UnaryExp = {
     PrimaryExp => UnaryExp::PrimaryExp(<>),
+    <ident: Ident> "(" ")" => UnaryExp::FuncExp(FuncExp{ident: ident, func_rparams: Vec::new()}),
+    <ident: Ident> "(" <func_rparam0: FuncRParam> <mut func_rparams: ("," <FuncRParam>)*> ")" => {
+        func_rparams.insert(0, func_rparam0);
+        UnaryExp::FuncExp(FuncExp{ident: ident, func_rparams: func_rparams})
+    },
     "+" <UnaryExp> => <>,
     <unary_op: UnaryOp> <unary_exp: UnaryExp> => UnaryExp::UnaryOpExp(unary_op, Box::new(unary_exp)),
 }
+
+/// Real Parameters of function calls.
+FuncRParam: FuncRParam = <exp: Exp> => FuncRParam{ <> };
 
 /// Unary operators.
 UnaryOp: UnaryOp = {

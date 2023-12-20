@@ -3,10 +3,17 @@
 
 /// I. Compilation Unit
 
-/// CompUnit    ::= FuncDef;
+/// CompUnit        ::= [GlobalItem];
 #[derive(Debug)]
 pub struct CompUnit {
-    pub func_def: FuncDef,
+    pub global_items: Vec<GlobalItem>,
+}
+
+/// GlobalItem      ::= (Decl | FuncDef);
+#[derive(Debug)]
+pub enum GlobalItem {
+    Decl(Decl),
+    FuncDef(FuncDef),
 }
 
 /// II. Declaration of variables
@@ -18,17 +25,10 @@ pub enum Decl {
     VarDecl(VarDecl),
 }
 
-/// ConstDecl   ::= "const" BType ConstDef {"," ConstDef} ";";
+/// ConstDecl   ::= "const" "int" ConstDef {"," ConstDef} ";";
 #[derive(Debug)]
 pub struct ConstDecl {
-    pub btype: BType,
     pub const_defs: Vec<ConstDef>,
-}
-
-/// BType       ::= "int";
-#[derive(Debug)]
-pub enum BType {
-    Int,
 }
 
 /// ConstDef    ::= IDENT "=" ConstInitVal;
@@ -44,10 +44,9 @@ pub struct ConstInitVal {
     pub const_exp: ConstExp,
 }
 
-/// VarDecl     ::= BType VarDef {"," VarDef} ";";
+/// VarDecl     ::= "int" VarDef {"," VarDef} ";";
 #[derive(Debug)]
 pub struct VarDecl {
-    pub btype: BType,
     pub var_defs: Vec<VarDef>,
 }
 
@@ -66,18 +65,27 @@ pub struct InitVal {
 
 /// III. Function Structures
 
-/// FuncDef     ::= FuncType IDENT "(" ")" Block;
+/// FuncDef     ::= FuncType IDENT "(" [FuncFParams] ")" Block;
+/// FuncFParams     ::= FuncFParam {"," FuncFParam};
 #[derive(Debug)]
 pub struct FuncDef {
     pub func_type: FuncType,
+    pub func_fparams: Vec<FuncFParam>,
     pub ident: String,
     pub block: Block,
 }
 
-/// FuncType    ::= "int";
+/// FuncType    ::= "void" | "int";
 #[derive(Debug)]
 pub enum FuncType {
+    Void,
     Int,
+}
+
+/// FuncFParam      ::= "int" IDENT;
+#[derive(Debug)]
+pub struct FuncFParam {
+    pub ident: String,
 }
 
 /// Block       ::= "{" { BlockItem} "}";
@@ -180,11 +188,26 @@ pub enum PrimaryExp {
     Number(i32),
 }
 
-/// UnaryExp    ::= PrimaryExp | UnaryOp UnaryExp;
+/// UnaryExp    ::= PrimaryExp | FuncExp | UnaryOp UnaryExp;
 #[derive(Debug)]
 pub enum UnaryExp {
     PrimaryExp(PrimaryExp),
+    FuncExp(FuncExp),
     UnaryOpExp(UnaryOp, Box<UnaryExp>),
+}
+
+/// FuncExp         ::= IDENT "(" [FuncRParams] ")";
+/// FuncRParams     ::= FuncRParam {"," FuncRParam};
+#[derive(Debug)]
+pub struct FuncExp {
+    pub ident: String,
+    pub func_rparams: Vec<FuncRParam>,
+}
+
+/// FuncRParam  ::= Exp
+#[derive(Debug)]
+pub struct FuncRParam {
+    pub exp: Exp,
 }
 
 /// UnaryOp     ::= "+" | "-" | "!";

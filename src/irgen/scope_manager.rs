@@ -1,7 +1,7 @@
 use super::error::IRGenError;
 use super::function::FunctionInfo;
 use super::variable::Variable;
-use koopa::ir::{BasicBlock, Function};
+use koopa::ir::{BasicBlock, Function, Program, Type, Value};
 use std::collections::HashMap;
 
 /// ScopeManager is a singleton to manage the scope of the CompUnit.
@@ -35,8 +35,12 @@ impl<'ast> ScopeManager<'ast> {
 
     /// Add a new function to current Scope
     pub fn new_func(&mut self, id: &'ast str, func: Function) -> Result<(), IRGenError> {
-        self.funcs.insert(id, func);
-        Ok(())
+        if self.funcs.contains_key(id) || self.vals_stack.first().unwrap().contains_key(id) {
+            Err(IRGenError::DupIdent(id.to_string()))
+        } else {
+            self.funcs.insert(id, func);
+            Ok(())
+        }
     }
 
     /// Return a reference to the current function
@@ -52,6 +56,14 @@ impl<'ast> ScopeManager<'ast> {
     /// Edit the current function
     pub fn set_curr_func(&mut self, info: FunctionInfo) -> () {
         self.curr_func = Some(info);
+    }
+
+    /// Return a function according to its name
+    pub fn load_function(&self, ident: &'ast str) -> Result<Function, IRGenError> {
+        match self.funcs.get(ident).copied() {
+            Some(func) => Ok(func),
+            None => Err(IRGenError::IdentNotFound(ident.to_string())),
+        }
     }
 
     /// Open a new scope
@@ -88,6 +100,20 @@ impl<'ast> ScopeManager<'ast> {
             }
         }
         Err(IRGenError::IdentNotFound(ident.to_string()))
+    }
+
+    /// Return the type of a value
+    pub fn get_value_type(&self, program: &Program, value: Value) -> Type {
+        if value.is_global() {
+            program.borrow_value(value).ty().clone()
+        } else {
+            program
+                .func(self.ref_curr_func().unwrap().func())
+                .dfg()
+                .value(value)
+                .ty()
+                .clone()
+        }
     }
 
     /// Enter a new loop
