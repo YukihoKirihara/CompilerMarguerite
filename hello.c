@@ -1,29 +1,15 @@
-// int x = 1;
-// const int y = 2;
+int x = 0;
 
-// void incr()
-// {
-//     x = x + 2;
-// }
-
-// int main()
-// {
-
-//     int z = 0;
-//     while (z < y)
-//     {
-//         incr();
-//         z = z + 1;
-//     }
-//     return x;
-// }
-
-int add(int a, int b)
+int incr()
 {
-    return a + b;
+    x = x + 1;
+    return 1;
 }
 
 int main()
 {
-    return add(1, 2);
+    int sum = 0;
+    sum = sum + (incr() || incr());
+    sum = sum + (incr() && incr());
+    return x;
 }

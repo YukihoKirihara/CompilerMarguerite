@@ -938,12 +938,15 @@ impl<'ast> IRGenerator<'ast> for LAndExp {
         match self {
             LAndExp::EqExp(eq_exp) => eq_exp.generate(program, scopes),
             LAndExp::LAndEqExp(land_exp, eq_exp) => {
+                // A local allocation for the result value
+                let info = scopes.mut_ref_curr_func().unwrap();
+                let alloc = info.create_new_value(program).alloc(Type::get_i32());
+                info.push_inst_curr_bblock(program, alloc);
+                // Generate the basic blocks for right argument and the final
+                let right_bblock = info.create_new_bblock(program, Some("%land_right"));
+                let final_bblock = info.create_new_bblock(program, Some("%land_final"));
+                // Go down the left argument and convert it into logical value
                 let lhs = land_exp
-                    .generate(program, scopes)
-                    .unwrap()
-                    .get_int_value(program, scopes)
-                    .unwrap();
-                let rhs = eq_exp
                     .generate(program, scopes)
                     .unwrap()
                     .get_int_value(program, scopes)
@@ -954,15 +957,42 @@ impl<'ast> IRGenerator<'ast> for LAndExp {
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, lhs);
                 info.push_inst_curr_bblock(program, lvalue);
+                // Store the value of left argument into result
+                let lstore = info.create_new_value(program).store(lvalue, alloc);
+                info.push_inst_curr_bblock(program, lstore);
+                // If the left argument is False, skip the right bblock
+                let cond = info
+                    .create_new_value(program)
+                    .binary(BinaryOp::Eq, lvalue, zero);
+                info.push_inst_curr_bblock(program, cond);
+                let branch =
+                    info.create_new_value(program)
+                        .branch(cond, final_bblock, right_bblock);
+                info.push_inst_curr_bblock(program, branch);
+                // Go down the right argument and convert it into logical value
+                info.push_bblock(program, right_bblock);
+                let rhs = eq_exp
+                    .generate(program, scopes)
+                    .unwrap()
+                    .get_int_value(program, scopes)
+                    .unwrap();
+                let info = scopes.mut_ref_curr_func().unwrap();
                 let rvalue = info
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, rhs);
                 info.push_inst_curr_bblock(program, rvalue);
-                let value = info
-                    .create_new_value(program)
-                    .binary(BinaryOp::And, lvalue, rvalue);
-                info.push_inst_curr_bblock(program, value);
-                Ok(ExpValue::Int(value))
+                // Store the value of right argument into result.
+                // Implemented iff the left argument is True. (a == True) -> ((a && b) == b)
+                let rstore = info.create_new_value(program).store(rvalue, alloc);
+                info.push_inst_curr_bblock(program, rstore);
+                // Jump to the final bblock
+                let jump = info.create_new_value(program).jump(final_bblock);
+                info.push_inst_curr_bblock(program, jump);
+                info.push_bblock(program, final_bblock);
+                // Return the result value
+                let load = info.create_new_value(program).load(alloc);
+                info.push_inst_curr_bblock(program, load);
+                Ok(ExpValue::Int(load))
             }
         }
     }
@@ -978,12 +1008,15 @@ impl<'ast> IRGenerator<'ast> for LOrExp {
         match self {
             LOrExp::LAndExp(land_exp) => land_exp.generate(program, scopes),
             LOrExp::LOrAndExp(lor_exp, land_exp) => {
+                // A local allocation for the result value
+                let info = scopes.mut_ref_curr_func().unwrap();
+                let alloc = info.create_new_value(program).alloc(Type::get_i32());
+                info.push_inst_curr_bblock(program, alloc);
+                // Generate the basic blocks for right argument and the final
+                let right_bblock = info.create_new_bblock(program, Some("%lor_right"));
+                let final_bblock = info.create_new_bblock(program, Some("%lor_final"));
+                // Go down the left argument and convert it into logical value
                 let lhs = lor_exp
-                    .generate(program, scopes)
-                    .unwrap()
-                    .get_int_value(program, scopes)
-                    .unwrap();
-                let rhs = land_exp
                     .generate(program, scopes)
                     .unwrap()
                     .get_int_value(program, scopes)
@@ -994,15 +1027,42 @@ impl<'ast> IRGenerator<'ast> for LOrExp {
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, lhs);
                 info.push_inst_curr_bblock(program, lvalue);
+                // Store the value of left argument into result
+                let lstore = info.create_new_value(program).store(lvalue, alloc);
+                info.push_inst_curr_bblock(program, lstore);
+                // If the left argument is True, skip the right bblock
+                let cond = info
+                    .create_new_value(program)
+                    .binary(BinaryOp::NotEq, lvalue, zero);
+                info.push_inst_curr_bblock(program, cond);
+                let branch =
+                    info.create_new_value(program)
+                        .branch(cond, final_bblock, right_bblock);
+                info.push_inst_curr_bblock(program, branch);
+                // Go down the right argument and convert it into logical value
+                info.push_bblock(program, right_bblock);
+                let rhs = land_exp
+                    .generate(program, scopes)
+                    .unwrap()
+                    .get_int_value(program, scopes)
+                    .unwrap();
+                let info = scopes.mut_ref_curr_func().unwrap();
                 let rvalue = info
                     .create_new_value(program)
                     .binary(BinaryOp::NotEq, zero, rhs);
                 info.push_inst_curr_bblock(program, rvalue);
-                let value = info
-                    .create_new_value(program)
-                    .binary(BinaryOp::Or, lvalue, rvalue);
-                info.push_inst_curr_bblock(program, value);
-                Ok(ExpValue::Int(value))
+                // Store the value of right argument into result.
+                // Implemented iff the left argument is False. (a == False) -> ((a || b) == b)
+                let rstore = info.create_new_value(program).store(rvalue, alloc);
+                info.push_inst_curr_bblock(program, rstore);
+                // Jump to the final bblock
+                let jump = info.create_new_value(program).jump(final_bblock);
+                info.push_inst_curr_bblock(program, jump);
+                info.push_bblock(program, final_bblock);
+                // Return the result value
+                let load = info.create_new_value(program).load(alloc);
+                info.push_inst_curr_bblock(program, load);
+                Ok(ExpValue::Int(load))
             }
         }
     }
