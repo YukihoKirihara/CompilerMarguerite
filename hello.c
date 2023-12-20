@@ -1,17 +1,29 @@
-int x = 1;
-const int y = 2;
-void f()
+// int x = 1;
+// const int y = 2;
+
+// void incr()
+// {
+//     x = x + 2;
+// }
+
+// int main()
+// {
+
+//     int z = 0;
+//     while (z < y)
+//     {
+//         incr();
+//         z = z + 1;
+//     }
+//     return x;
+// }
+
+int add(int a, int b)
 {
-    x = x + 1;
+    return a + b;
 }
 
 int main()
 {
-    f();
-    f();
-    f();
-    f();
-    f();
-    f();
-    return x;
+    return add(1, 2);
 }

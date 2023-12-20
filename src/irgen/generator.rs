@@ -302,8 +302,6 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
             info.push_inst_curr_bblock(program, ret_val.unwrap());
         }
         info.push_bblock(program, curr_block);
-        let jump = info.create_new_value(program).jump(curr_block);
-        info.push_inst(program, entry_block, jump);
 
         // Maintain the scopes, and go down the AST
         scopes.open();
@@ -319,13 +317,18 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
             info.push_inst_curr_bblock(program, store);
             scopes.create_new_variable(&fparam.ident, Variable::Value(alloc))?;
         }
+        // Record the current function in scopes
         scopes.new_func(&self.ident, func)?;
         scopes.set_curr_func(info);
+        // Go down the block
         self.block.generate(program, scopes)?;
         scopes.close();
 
-        // The last part
+        // Conclude the entry block
         let info = scopes.mut_ref_curr_func().unwrap();
+        let jump = info.create_new_value(program).jump(curr_block);
+        info.push_inst(program, entry_block, jump);
+        // The last part
         info.conclude_func(program);
         Ok(())
     }
