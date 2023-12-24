@@ -17,20 +17,73 @@ decl @stoptime()
 fun @main(): i32 {
 %entry:
   %ret = alloc i32
-  @a = alloc [i32, 10]
-  @b = alloc [i32, 10]
-  @c = alloc i32
-  @d = alloc [i32, 10]
+  @a = alloc [i32, 3]
+  @b = alloc [i32, 4]
+  @c = alloc [i32, 7]
+  @d = alloc [i32, 11]
+  @e = alloc [i32, 2]
+  @f = alloc [i32, 6]
+  @g = alloc [i32, 9]
   jump %0
 
 %0:
-  store 0, %ret
+  %1 = getelemptr @a, 0
+  store 0, %1
+  %2 = getelemptr @a, 1
+  store 0, %2
+  %3 = getelemptr @a, 2
+  store 0, %3
+  %4 = getelemptr @b, 0
+  store 0, %4
+  %5 = getelemptr @b, 1
+  store 1, %5
+  %6 = getelemptr @b, 2
+  store 0, %6
+  %7 = getelemptr @b, 3
+  store 0, %7
+  %8 = getelemptr @c, 0
+  store 2, %8
+  %9 = getelemptr @c, 1
+  store 8, %9
+  %10 = getelemptr @c, 2
+  store 6, %10
+  %11 = getelemptr @c, 3
+  store 3, %11
+  %12 = getelemptr @c, 4
+  store 9, %12
+  %13 = getelemptr @c, 5
+  store 1, %13
+  %14 = getelemptr @c, 6
+  store 5, %14
+  %15 = getelemptr @e, 0
+  store 22, %15
+  %16 = getelemptr @e, 1
+  store 33, %16
+  %17 = getelemptr @g, 0
+  store 85, %17
+  %18 = getelemptr @g, 1
+  store 0, %18
+  %19 = getelemptr @g, 2
+  store 1, %19
+  %20 = getelemptr @g, 3
+  store 29, %20
+  %21 = getelemptr @g, 4
+  store 0, %21
+  %22 = getelemptr @g, 5
+  store 0, %22
+  %23 = getelemptr @g, 6
+  store 0, %23
+  %24 = getelemptr @g, 7
+  store 0, %24
+  %25 = getelemptr @g, 8
+  store 0, %25
+  store 3, %ret
   jump %exit
 
-%1:
+%26:
   jump %exit
 
 %exit:
-  %2 = load %ret
-  ret %2
+  %27 = load %ret
+  ret %27
 }
