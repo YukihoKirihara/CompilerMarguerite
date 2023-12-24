@@ -1,5 +1,5 @@
 use super::error::IRGenError;
-use super::function::FunctionInfo;
+use super::function_info::FunctionInfo;
 use super::variable::Variable;
 use koopa::ir::{BasicBlock, Function, Program, Type, Value};
 use std::collections::HashMap;

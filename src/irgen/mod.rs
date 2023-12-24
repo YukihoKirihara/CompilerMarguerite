@@ -4,10 +4,12 @@ use self::scope_manager::ScopeManager;
 use crate::ast::CompUnit;
 use koopa::ir::Program;
 
+mod array;
 mod error;
 mod exp_value;
-mod function;
+mod function_info;
 mod generator;
+mod helper;
 mod rval_calculator;
 mod scope_manager;
 mod variable;

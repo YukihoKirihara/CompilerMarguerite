@@ -1,5 +1,3 @@
-global @x = alloc i32, 0
-
 decl @getint(): i32
 
 decl @getch(): i32
@@ -16,78 +14,23 @@ decl @starttime()
 
 decl @stoptime()
 
-fun @incr(): i32 {
-%entry:
-  %ret = alloc i32
-  jump %0
-
-%0:
-  %1 = load @x
-  %2 = add %1, 1
-  store %2, @x
-  store 1, %ret
-  jump %exit
-
-%3:
-  jump %exit
-
-%exit:
-  %4 = load %ret
-  ret %4
-}
-
 fun @main(): i32 {
 %entry:
   %ret = alloc i32
-  jump %5
+  @a = alloc [i32, 10]
+  @b = alloc [i32, 10]
+  @c = alloc i32
+  @d = alloc [i32, 10]
+  jump %0
 
-%5:
-  @sum = alloc i32
-  store 0, @sum
-  %6 = load @sum
-  %7 = alloc i32
-  %8 = call @incr()
-  %9 = ne 0, %8
-  store %9, %7
-  %10 = ne %9, 0
-  br %10, %lor_final, %lor_right
-
-%lor_right:
-  %11 = call @incr()
-  %12 = ne 0, %11
-  store %12, %7
-  jump %lor_final
-
-%lor_final:
-  %13 = load %7
-  %14 = add %6, %13
-  store %14, @sum
-  %15 = load @sum
-  %16 = alloc i32
-  %17 = call @incr()
-  %18 = ne 0, %17
-  store %18, %16
-  %19 = eq %18, 0
-  br %19, %land_final, %land_right
-
-%land_right:
-  %20 = call @incr()
-  %21 = ne 0, %20
-  store %21, %16
-  jump %land_final
-
-%land_final:
-  %22 = load %16
-  %23 = add %15, %22
-  store %23, @sum
-  %24 = load @x
-  store %24, %ret
+%0:
+  store 0, %ret
   jump %exit
 
-%25:
+%1:
   jump %exit
 
 %exit:
-  %26 = load %ret
-  ret %26
+  %2 = load %ret
+  ret %2
 }

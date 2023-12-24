@@ -1,8 +1,10 @@
 use std::vec;
 
+use super::array::ArrayType;
 use super::error::IRGenError;
 use super::exp_value::ExpValue;
-use super::function::FunctionInfo;
+use super::function_info::FunctionInfo;
+use super::helper::get_array_type;
 use super::rval_calculator::RValCalculator;
 use super::scope_manager::ScopeManager;
 use super::variable::Variable;
@@ -155,24 +157,56 @@ impl<'ast> IRGenerator<'ast> for ConstDef {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
+        // Deduce the type of the constant, which can be a single integer or a nested array.
+        let const_type = get_array_type(&self.dims, scopes).unwrap();
         // Generate the initial value of the constant.
         let init_val = self.const_init_val.generate(program, scopes).unwrap();
-        // Generate the variable.
-        let var = Variable::Const(init_val);
-        // Add the constant to current scope. Duplicate Identifier Error may occur.
-        scopes.create_new_variable(self.ident.as_str(), var)?;
+        // Reshape the initial value.
+        let reshaped_init_val = init_val.reshape(&const_type).unwrap();
+        if const_type.is_i32() {
+            // A single constant integer.
+            // Generate the variable.
+            let var = Variable::Const(reshaped_init_val.get_const_i32().unwrap());
+            // Add the constant to current scope. Duplicate Identifier Error may occur.
+            scopes.create_new_variable(self.ident.as_str(), var)?;
+        } else {
+            // A constant array.
+            let value = if scopes.is_global() {
+                let init = reshaped_init_val.get_const_value(program, scopes).unwrap();
+                let alloc = program.new_value().global_alloc(init);
+                program.set_value_name(alloc, Some(format!("@{}", self.ident)));
+                alloc
+            } else {
+                let info = scopes.mut_ref_curr_func().unwrap();
+                let alloc = info
+                    .create_new_allocation(program, const_type, Some(&self.ident))
+                    .unwrap();
+                reshaped_init_val.push_store_inst(program, scopes, alloc)?;
+                alloc
+            };
+            scopes.create_new_variable(&self.ident, Variable::Value(value))?;
+        }
         Ok(())
     }
 }
 
 impl<'ast> IRGenerator<'ast> for ConstInitVal {
-    type Ret = i32;
+    type Ret = ArrayType;
     fn generate(
         &'ast self,
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        self.const_exp.generate(program, scopes)
+        match self {
+            Self::ConstArrayInitVal(init_vals) => Ok(ArrayType::Array(
+                init_vals
+                    .into_iter()
+                    .map(|init_val| init_val.generate(program, scopes))
+                    .collect::<Result<_, _>>()
+                    .unwrap(),
+            )),
+            Self::ConstExp(exp) => Ok(ArrayType::BaseConst(exp.generate(program, scopes).unwrap())),
+        }
     }
 }
 
@@ -197,63 +231,69 @@ impl<'ast> IRGenerator<'ast> for VarDef {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
+        // Deduce the type, which can be a single integer or a nested array.
+        let _type = get_array_type(&self.dims, scopes).unwrap();
         // Generate the initial value
-        let rvalue = if let Some(init_value) = &self.init_val {
-            Some(
-                init_value
+        let reshaped_init_val = match self.init_val.as_ref() {
+            Some(_init_val) => Some(
+                _init_val
                     .generate(program, scopes)
                     .unwrap()
-                    .get_int_value(program, scopes)
+                    .reshape(&_type)
                     .unwrap(),
-            )
-        } else {
-            None
+            ),
+            None => None,
         };
-        // Generate the variable.
-        // Global case
-        let alloc = if scopes.is_global() {
-            let init = match rvalue {
-                Some(value) => value,
-                None => program.new_value().zero_init(Type::get_i32()),
+        let value = if scopes.is_global() {
+            let global_init = match reshaped_init_val {
+                Some(_init_val) => _init_val.get_const_value(program, scopes).unwrap(),
+                None => program.new_value().zero_init(_type),
             };
-            let global_alloc = program.new_value().global_alloc(init);
-            program.set_value_name(global_alloc, Some(format!("@{}", self.ident)));
-            global_alloc
+            let value = program.new_value().global_alloc(global_init);
+            program.set_value_name(value, Some(format!("@{}", self.ident)));
+            value
         } else {
-            // Local case
             let info = scopes.mut_ref_curr_func().unwrap();
-            let local_alloc = info.create_new_value(program).alloc(Type::get_i32());
-            program
-                .func_mut(info.func())
-                .dfg_mut()
-                .set_value_name(local_alloc, Some(format!("@{}", self.ident)));
-            info.push_inst_curr_bblock(program, local_alloc);
-            if rvalue.is_some() {
-                let store = info
-                    .create_new_value(program)
-                    .store(rvalue.unwrap(), local_alloc);
-                info.push_inst_curr_bblock(program, store);
+            let alloc = info
+                .create_new_allocation(program, _type, Some(&self.ident))
+                .unwrap();
+            if let Some(_init_val) = reshaped_init_val {
+                _init_val.push_store_inst(program, scopes, alloc)?;
             }
-            local_alloc
+            alloc
         };
-        let var = Variable::Value(alloc);
-        scopes.create_new_variable(&self.ident, var)?;
+        scopes.create_new_variable(&self.ident, Variable::Value(value))?;
         Ok(())
     }
 }
 
 impl<'ast> IRGenerator<'ast> for InitVal {
-    type Ret = ExpValue;
+    type Ret = ArrayType;
     fn generate(
         &'ast self,
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        if scopes.is_global() {
-            let num = self.exp.rval_calc(scopes).unwrap();
-            Ok(ExpValue::Int(program.new_value().integer(num)))
-        } else {
-            self.exp.generate(program, scopes)
+        match self {
+            Self::ArrayInitVal(init_vals) => Ok(ArrayType::Array(
+                init_vals
+                    .into_iter()
+                    .map(|init_val| init_val.generate(program, scopes))
+                    .collect::<Result<_, _>>()
+                    .unwrap(),
+            )),
+            Self::Exp(exp) => {
+                if scopes.is_global() {
+                    Ok(ArrayType::BaseConst(exp.rval_calc(scopes).unwrap()))
+                } else {
+                    Ok(ArrayType::BaseValue(
+                        exp.generate(program, scopes)
+                            .unwrap()
+                            .get_int_value(program, scopes)
+                            .unwrap(),
+                    ))
+                }
+            }
         }
     }
 }
@@ -307,12 +347,9 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
         scopes.open();
         // Allocate and store the input parameters
         for (fparam, rparam) in self.func_fparams.iter().zip(params) {
-            let alloc = info.create_new_value(program).alloc(Type::get_i32());
-            program
-                .func_mut(func)
-                .dfg_mut()
-                .set_value_name(alloc, Some(format!("@{}", fparam.ident)));
-            info.push_inst(program, entry_block, alloc);
+            let alloc = info
+                .create_new_allocation(program, Type::get_i32(), Some(&fparam.ident))
+                .unwrap();
             let store = info.create_new_value(program).store(rparam, alloc);
             info.push_inst_curr_bblock(program, store);
             scopes.create_new_variable(&fparam.ident, Variable::Value(alloc))?;

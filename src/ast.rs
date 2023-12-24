@@ -31,17 +31,19 @@ pub struct ConstDecl {
     pub const_defs: Vec<ConstDef>,
 }
 
-/// ConstDef    ::= IDENT "=" ConstInitVal;
+/// ConstDef        ::= IDENT {"[" ConstExp "]"} "=" ConstInitVal;
 #[derive(Debug)]
 pub struct ConstDef {
     pub ident: String,
+    pub dims: Vec<ConstExp>,
     pub const_init_val: ConstInitVal,
 }
 
-/// ConstInitVal    ::= ConstExp;
+/// ConstInitVal    ::= ConstExp | "{" [ConstInitVal {"," ConstInitVal}] "}";
 #[derive(Debug)]
-pub struct ConstInitVal {
-    pub const_exp: ConstExp,
+pub enum ConstInitVal {
+    ConstExp(ConstExp),
+    ConstArrayInitVal(Vec<ConstInitVal>),
 }
 
 /// VarDecl     ::= "int" VarDef {"," VarDef} ";";
@@ -50,17 +52,20 @@ pub struct VarDecl {
     pub var_defs: Vec<VarDef>,
 }
 
-/// VarDef      ::= IDENT | IDENT "=" InitVal;
+/// VarDef          ::= IDENT {"[" ConstExp "]"}
+///                 | IDENT {"[" ConstExp "]"} "=" InitVal;
 #[derive(Debug)]
 pub struct VarDef {
     pub ident: String,
+    pub dims: Vec<ConstExp>,
     pub init_val: Option<InitVal>,
 }
 
-/// InitVal     ::= Exp;
+/// InitVal         ::= Exp | "{" [InitVal {"," InitVal}] "}";
 #[derive(Debug)]
-pub struct InitVal {
-    pub exp: Exp,
+pub enum InitVal {
+    Exp(Exp),
+    ArrayInitVal(Vec<InitVal>),
 }
 
 /// III. Function Structures
@@ -82,10 +87,11 @@ pub enum FuncType {
     Int,
 }
 
-/// FuncFParam      ::= "int" IDENT;
+/// FuncFParam      ::= "int" IDENT ["[" "]" {"[" ConstExp "]"}];
 #[derive(Debug)]
 pub struct FuncFParam {
     pub ident: String,
+    pub sub_dims: Vec<ConstExp>,
 }
 
 /// Block       ::= "{" { BlockItem} "}";
@@ -173,10 +179,11 @@ pub struct Exp {
     pub lor_exp: LOrExp,
 }
 
-/// LVal        ::= IDENT;
+/// LVal            ::= IDENT {"[" Exp "]"};
 #[derive(Debug)]
 pub struct LVal {
     pub ident: String,
+    pub idxs: Vec<Exp>,
 }
 
 /// PrimaryExp  ::= "(" Exp ")" | LVal | Number;

@@ -1,15 +1,7 @@
-int x = 0;
-
-int incr()
-{
-    x = x + 1;
-    return 1;
-}
-
 int main()
 {
-    int sum = 0;
-    sum = sum + (incr() || incr());
-    sum = sum + (incr() && incr());
-    return x;
+    int a[10];
+    const int len = 10;
+    int b[8 + 2], c, d[len];
+    return 0;
 }

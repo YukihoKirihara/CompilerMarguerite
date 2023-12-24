@@ -38,13 +38,20 @@ ConstDecl: ConstDecl = {
 
 /// Definition of constant variables, where the initial value is a must.
 ConstDef: ConstDef = {
-    <ident: Ident> "=" <const_init_val: ConstInitVal> => {
-        ConstDef{ident: ident, const_init_val: const_init_val}
+    <ident: Ident> <dims: ("[" <ConstExp> "]")*> "=" <const_init_val: ConstInitVal> => {
+        ConstDef{ <> }
     }
 }
 
 /// Initial values of constant variables
-ConstInitVal: ConstInitVal = <const_exp: ConstExp> => ConstInitVal{ <> };
+ConstInitVal: ConstInitVal = {
+    <const_exp: ConstExp> => ConstInitVal::ConstExp( <> ),
+    "{" "}" => ConstInitVal::ConstArrayInitVal(Vec::new()),
+    "{" <const_init_val0: ConstInitVal> <mut const_init_vals: ("," <ConstInitVal>)*> "}" => {
+        const_init_vals.insert(0, const_init_val0);
+        ConstInitVal::ConstArrayInitVal(const_init_vals)
+    },
+}
 
 /// Declaration of (mutable) variables, with multiple case supported.
 VarDecl: VarDecl = {
@@ -56,13 +63,20 @@ VarDecl: VarDecl = {
 
 /// Definition of (mutable) variables, where the initial value is optional.
 VarDef: VarDef = {
-    <ident: Ident> <init_val: ("=" <InitVal>)?> => {
-        VarDef{ident: ident, init_val: init_val}
+    <ident: Ident> <dims: ("[" <ConstExp> "]")*> <init_val: ("=" <InitVal>)?> => {
+        VarDef{ <> }
     }
 }
 
 /// Initial values of (mutable) variables.
-InitVal: InitVal = <exp: Exp> => InitVal{ <> };
+InitVal: InitVal = {
+    <exp: Exp> => InitVal::Exp(exp),
+    "{" "}" => InitVal::ArrayInitVal(Vec::new()),
+    "{" <init_val0: InitVal> <mut init_vals: ("," <InitVal>)*> "}" => {
+        init_vals.insert(0, init_val0);
+        InitVal::ArrayInitVal(init_vals)
+    }
+}
 
 /// Definition of functions
 FuncDef: FuncDef = {
@@ -83,7 +97,10 @@ FuncPrefix: (FuncType, String) = {
 }
 
 /// Formal parameter of functions
-FuncFParam: FuncFParam = "int" <ident: Ident> => FuncFParam{ident: ident};
+FuncFParam: FuncFParam = {
+    "int" <ident: Ident> => FuncFParam{ident: ident, sub_dims: Vec::new()},
+    "int" <ident: Ident> "[" "]" <sub_dims: ("[" <ConstExp> "]")*> => FuncFParam{ <> },
+}
 
 /// The main body of functions
 Block: Block = "{" <block_items: (<BlockItem>)*> "}" => Block { <> };
@@ -137,7 +154,7 @@ UnMatchedStmt: Stmt = {
 Exp: Exp = <lor_exp: LOrExp> => Exp { <> };
 
 /// Left values. Names (identifiers) of variables.
-LVal: LVal = <ident: Ident> => LVal { <> };
+LVal: LVal = <ident: Ident> <idxs: ("[" <Exp> "]")*>=> LVal { <> };
 
 /// Primary expressions. Parenthesized expressions, left values and numbers have the highest priority.
 PrimaryExp: PrimaryExp = {

@@ -4,17 +4,17 @@ use super::variable::Variable;
 use crate::ast::*;
 
 pub trait RValCalculator<'exp> {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError>;
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError>;
 }
 
 impl<'exp> RValCalculator<'exp> for Exp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         self.lor_exp.rval_calc(scopes)
     }
 }
 
 impl<'exp> RValCalculator<'exp> for LVal {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         let var = scopes.load_variable(&self.ident).unwrap();
         match *var {
             Variable::Const(num) => Ok(num),
@@ -24,7 +24,7 @@ impl<'exp> RValCalculator<'exp> for LVal {
 }
 
 impl<'exp> RValCalculator<'exp> for PrimaryExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::ParenExp(exp) => exp.rval_calc(scopes),
             Self::LVal(lval) => lval.rval_calc(scopes),
@@ -34,7 +34,7 @@ impl<'exp> RValCalculator<'exp> for PrimaryExp {
 }
 
 impl<'exp> RValCalculator<'exp> for UnaryExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::PrimaryExp(exp) => exp.rval_calc(scopes),
             Self::FuncExp(func_exp) => {
@@ -52,7 +52,7 @@ impl<'exp> RValCalculator<'exp> for UnaryExp {
 }
 
 impl<'exp> RValCalculator<'exp> for MulExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::UnaryExp(exp) => exp.rval_calc(scopes),
             Self::MulUnaryExp(lexp, mul_op, rexp) => {
@@ -81,7 +81,7 @@ impl<'exp> RValCalculator<'exp> for MulExp {
 }
 
 impl<'exp> RValCalculator<'exp> for AddExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::MulExp(exp) => exp.rval_calc(scopes),
             Self::AddMulExp(lexp, add_op, rexp) => {
@@ -97,7 +97,7 @@ impl<'exp> RValCalculator<'exp> for AddExp {
 }
 
 impl<'exp> RValCalculator<'exp> for RelExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::AddExp(exp) => exp.rval_calc(scopes),
             Self::RelAddExp(lexp, rel_op, rexp) => {
@@ -115,7 +115,7 @@ impl<'exp> RValCalculator<'exp> for RelExp {
 }
 
 impl<'exp> RValCalculator<'exp> for EqExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::RelExp(exp) => exp.rval_calc(scopes),
             Self::EqRelExp(lexp, eq_op, rexp) => {
@@ -131,7 +131,7 @@ impl<'exp> RValCalculator<'exp> for EqExp {
 }
 
 impl<'exp> RValCalculator<'exp> for LAndExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::EqExp(exp) => exp.rval_calc(scopes),
             Self::LAndEqExp(lexp, rexp) => {
@@ -144,7 +144,7 @@ impl<'exp> RValCalculator<'exp> for LAndExp {
 }
 
 impl<'exp> RValCalculator<'exp> for LOrExp {
-    fn rval_calc(&'exp self, scopes: &mut ScopeManager<'exp>) -> Result<i32, IRGenError> {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
         match self {
             Self::LAndExp(exp) => exp.rval_calc(scopes),
             Self::LOrAndExp(lexp, rexp) => {
@@ -153,5 +153,11 @@ impl<'exp> RValCalculator<'exp> for LOrExp {
                 Ok((lval || rval) as i32)
             }
         }
+    }
+}
+
+impl<'exp> RValCalculator<'exp> for ConstExp {
+    fn rval_calc(&'exp self, scopes: &ScopeManager<'exp>) -> Result<i32, IRGenError> {
+        self.exp.rval_calc(scopes)
     }
 }

@@ -11,6 +11,7 @@ pub enum ExpValue {
 }
 
 impl ExpValue {
+    /// Return the value of an integer, or the value pointed to by an integer pointer.
     pub fn get_int_value(
         self,
         program: &mut Program,
@@ -27,6 +28,8 @@ impl ExpValue {
             }
         }
     }
+
+    /// Return the value iff it is a pointer to integer.
     pub fn get_int_ptr(self) -> Result<Value, IRGenError> {
         match self {
             Self::Void => Err(IRGenError::VoidValue),
