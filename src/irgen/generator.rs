@@ -390,9 +390,13 @@ impl<'ast> IRGenerator<'ast> for FuncFParam {
     fn generate(
         &'ast self,
         _program: &mut Program,
-        _scopes: &mut ScopeManager<'ast>,
+        scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        Ok(Type::get_i32())
+        Ok(if self.sub_dims.len() > 0 {
+            Type::get_pointer(get_array_type(&self.sub_dims, scopes).unwrap())
+        } else {
+            Type::get_i32()
+        })
     }
 }
 
