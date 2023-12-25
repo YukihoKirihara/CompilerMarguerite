@@ -28,18 +28,22 @@ impl ArrayType {
                 // Generate the shapes of each dimension.
                 // Vec<(the number of columns in reverse order, the total of leaf elements in the subtree)>
                 // eg. a[2][4] -> [(4, 4), (2, 8)]
+                let mut rev_dims: Vec<usize> = Vec::new();
                 let mut shapes: Vec<(usize, usize)> = Vec::new();
                 let mut total: usize = 1;
                 loop {
                     match _type.kind() {
                         TypeKind::Int32 => break,
                         TypeKind::Array(sub_type, column_num) => {
-                            total *= column_num;
-                            shapes.push((*column_num, total));
+                            rev_dims.push(*column_num);
                             _type = sub_type;
                         }
                         _ => unreachable!(),
                     }
+                }
+                for d in rev_dims.iter().rev() {
+                    total *= d;
+                    shapes.push((*d, total));
                 }
                 Self::reshape_array(arr, &shapes)
             }
