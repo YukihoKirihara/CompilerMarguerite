@@ -662,15 +662,80 @@ impl<'ast> IRGenerator<'ast> for LVal {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        let value = match scopes.load_variable(self.ident.as_str()).unwrap() {
+        match scopes.load_variable(self.ident.as_str()).unwrap() {
             Variable::Const(num) => {
                 let info = scopes.ref_curr_func().unwrap();
                 let val = info.create_new_value(program).integer(*num);
-                ExpValue::Int(val)
+                return Ok(ExpValue::Int(val));
             }
-            Variable::Value(value) => ExpValue::IntPtr(*value),
-        };
-        Ok(value)
+            Variable::Value(value) => {
+                // Generate the type and dimension of the left value
+                let mut value = *value;
+                let mut is_ptr_ptr = false;
+                let mut dims = match scopes.get_value_type(program, value).kind() {
+                    TypeKind::Pointer(base) => {
+                        let mut _type = base;
+                        let mut _dims = 0;
+                        loop {
+                            _type = match _type.kind() {
+                                TypeKind::Pointer(base) => {
+                                    is_ptr_ptr = true;
+                                    base
+                                }
+                                TypeKind::Array(base, _) => base,
+                                _ => break _dims,
+                            };
+                            _dims += 1;
+                        }
+                    }
+                    _ => 0,
+                };
+                // Load the value if it is a pointer to a pointer
+                /*
+                    int (*arr) [3];
+                    arr[1][2];
+
+                    @arr = alloc *[i32, 3]        // @arr   **[i32, 3]
+                    %ptr1 = load @arr             // %ptr1  *[i32, 3]
+                    %ptr2 = getptr %ptr1, 1       // %ptr2  *[i32, 3]
+                    %ptr3 = getelemptr %ptr2, 2   // %ptr3  *i32
+                    %value = load %ptr3           // %value i32
+                */
+                if is_ptr_ptr {
+                    let info = scopes.ref_curr_func().unwrap();
+                    value = info.create_new_value(program).load(value);
+                    info.push_inst_curr_bblock(program, value);
+                }
+                // Go down each dimension and load the value
+                for (i, idx) in self.idxs.iter().enumerate() {
+                    dims -= 1;
+                    let index = idx
+                        .generate(program, scopes)
+                        .unwrap()
+                        .get_int_value(program, scopes)
+                        .unwrap();
+                    let info = scopes.ref_curr_func().unwrap();
+                    value = if is_ptr_ptr && i == 0 {
+                        info.create_new_value(program).get_ptr(value, index)
+                    } else {
+                        info.create_new_value(program).get_elem_ptr(value, index)
+                    };
+                    info.push_inst_curr_bblock(program, value);
+                }
+                if dims == 0 {
+                    Ok(ExpValue::IntPtr(value))
+                } else {
+                    // Fill the rest dimensions with 0
+                    if !is_ptr_ptr || !self.idxs.is_empty() {
+                        let info = scopes.ref_curr_func().unwrap();
+                        let zero = info.create_new_value(program).integer(0);
+                        value = info.create_new_value(program).get_elem_ptr(value, zero);
+                        info.push_inst_curr_bblock(program, value);
+                    }
+                    Ok(ExpValue::ArrPtr(value))
+                }
+            }
+        }
     }
 }
 

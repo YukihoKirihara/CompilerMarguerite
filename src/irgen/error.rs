@@ -6,6 +6,7 @@ use std::fmt::{Display, Formatter, Result};
 pub enum IRGenError {
     DupIdent(String),
     IdentNotFound(String),
+    IsAnArray,
     NotAConstant(String),
     NotAPointer,
     NotInALoop,
@@ -30,6 +31,7 @@ impl Display for IRGenError {
                 "The identifier '{}' is NOT found in current scopes.",
                 msg
             ),
+            Self::IsAnArray => write!(f, "Tried to treat an array as a base element."),
             Self::NotAConstant(msg) => write!(
                 f,
                 "The identifier '{}' does NOT match a constant variable.",

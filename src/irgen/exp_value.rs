@@ -8,6 +8,7 @@ pub enum ExpValue {
     Void,
     Int(Value),
     IntPtr(Value),
+    ArrPtr(Value),
 }
 
 impl ExpValue {
@@ -26,6 +27,7 @@ impl ExpValue {
                 info.push_inst_curr_bblock(program, load);
                 Ok(load)
             }
+            Self::ArrPtr(_) => Err(IRGenError::IsAnArray),
         }
     }
 
@@ -35,6 +37,7 @@ impl ExpValue {
             Self::Void => Err(IRGenError::VoidValue),
             Self::Int(_) => Err(IRGenError::NotAPointer),
             Self::IntPtr(ptr) => Ok(ptr),
+            Self::ArrPtr(_) => Err(IRGenError::IsAnArray),
         }
     }
 }
