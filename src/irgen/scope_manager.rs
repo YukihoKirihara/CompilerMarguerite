@@ -58,6 +58,11 @@ impl<'ast> ScopeManager<'ast> {
         self.curr_func = Some(info);
     }
 
+    /// Remove the current function
+    pub fn remove_curr_func(&mut self) -> () {
+        self.curr_func = None;
+    }
+
     /// Return a function according to its name
     pub fn load_function(&self, ident: &'ast str) -> Result<Function, IRGenError> {
         match self.funcs.get(ident).copied() {

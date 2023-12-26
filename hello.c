@@ -1,54 +1,85 @@
-int buf[2][100];
 
-// sort [l, r)
-void merge_sort(int l, int r)
-{
-    if (l + 1 >= r)
-        return;
+const int N = 1024;
+// void transpose(int n, int A[][N], int B[][N])
+// {
+//     int i = 0;
 
-    int mid = (l + r) / 2;
-    merge_sort(l, mid);
-    merge_sort(mid, r);
+//     i = 0;
+//     while (i < n)
+//     {
+//         int j = 0;
+//         while (j < n)
+//         {
+//             B[i][j] = A[j][i];
+//             j = j + 1;
+//         }
+//         i = i + 1;
+//     }
+// }
+void thisisatestfunction() {}
 
-    int i = l, j = mid, k = l;
-    while (i < mid && j < r)
-    {
-        if (buf[0][i] < buf[0][j])
-        {
-            buf[1][k] = buf[0][i];
-            i = i + 1;
-        }
-        else
-        {
-            buf[1][k] = buf[0][j];
-            j = j + 1;
-        }
-        k = k + 1;
-    }
-    while (i < mid)
-    {
-        buf[1][k] = buf[0][i];
-        i = i + 1;
-        k = k + 1;
-    }
-    while (j < r)
-    {
-        buf[1][k] = buf[0][j];
-        j = j + 1;
-        k = k + 1;
-    }
-
-    while (l < r)
-    {
-        buf[0][l] = buf[1][l];
-        l = l + 1;
-    }
-}
+// int A[N][N];
+int A;
+// int B[N][N];
 
 int main()
 {
-    int n = getarray(buf[0]);
-    merge_sort(0, n);
-    putarray(n, buf[0]);
+    // int n = getint();
+    // int i, j;
+
+    // i = 0;
+    // j = 0;
+    // while (i < n)
+    // {
+    //     j = 0;
+    //     while (j < n)
+    //     {
+    //         A[i][j] = getint();
+    //         j = j + 1;
+    //     }
+    //     i = i + 1;
+    // }
+
+    // A[0][0] = 1;
+    A = 1;
+
+    // starttime();
+    // i = 0;
+    // while (i < 500)
+    // {
+    //     // thisisatestfunction();
+    //     // transpose();
+    //     // transpose(n, A, B);
+    //     // transpose(n, B, A);
+    //     i = i + 1;
+    // }
+    // int ans = 0;
+    // i = 0;
+    // while (i < n)
+    // {
+    //     j = 0;
+    //     while (j < n)
+    //     {
+    //         ans = ans + B[i][j];
+    //         j = j + 1;
+    //     }
+    //     i = i + 1;
+    // }
+    // stoptime();
+    // putint(ans);
+    // putch(10);
     return 0;
 }
+
+// void func() {}
+
+// int main()
+// {
+//     int i = 0;
+//     while (i < 10)
+//     {
+//         func();
+//         i = i + 1;
+//     }
+//     return;
+// }

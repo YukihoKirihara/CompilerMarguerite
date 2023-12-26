@@ -1,4 +1,4 @@
-global @buf = alloc [[i32, 100], 2], zeroinit
+global @A = alloc i32, zeroinit
 
 decl @getint(): i32
 
@@ -16,198 +16,11 @@ decl @starttime()
 
 decl @stoptime()
 
-fun @merge_sort(%0: i32, %1: i32) {
+fun @thisisatestfunction() {
 %entry:
-  @l = alloc i32
-  @r = alloc i32
-  @mid = alloc i32
-  @i = alloc i32
-  @j = alloc i32
-  @k = alloc i32
-  jump %2
+  jump %0
 
-%2:
-  store %0, @l
-  store %1, @r
-  %3 = load @l
-  %4 = add %3, 1
-  %5 = load @r
-  %6 = ge %4, %5
-  br %6, %if_true, %if_false
-
-%if_true:
-  jump %exit
-
-%7:
-  jump %if_final
-
-%if_false:
-  jump %if_final
-
-%if_final:
-  %8 = load @l
-  %9 = load @r
-  %10 = add %8, %9
-  %11 = div %10, 2
-  store %11, @mid
-  %12 = load @l
-  %13 = load @mid
-  call @merge_sort(%12, %13)
-  %14 = load @mid
-  %15 = load @r
-  call @merge_sort(%14, %15)
-  %16 = load @l
-  store %16, @i
-  %17 = load @mid
-  store %17, @j
-  %18 = load @l
-  store %18, @k
-  jump %while_cond
-
-%while_cond:
-  %19 = alloc i32
-  %20 = load @i
-  %21 = load @mid
-  %22 = lt %20, %21
-  %23 = ne 0, %22
-  store %23, %19
-  %24 = eq %23, 0
-  br %24, %land_final, %land_right
-
-%land_right:
-  %25 = load @j
-  %26 = load @r
-  %27 = lt %25, %26
-  %28 = ne 0, %27
-  store %28, %19
-  jump %land_final
-
-%land_final:
-  %29 = load %19
-  br %29, %while_body, %while_final
-
-%while_body:
-  %30 = getelemptr @buf, 0
-  %31 = load @i
-  %32 = getelemptr %30, %31
-  %33 = load %32
-  %34 = getelemptr @buf, 0
-  %35 = load @j
-  %36 = getelemptr %34, %35
-  %37 = load %36
-  %38 = lt %33, %37
-  br %38, %if_true_0, %if_false_0
-
-%if_true_0:
-  %39 = getelemptr @buf, 0
-  %40 = load @i
-  %41 = getelemptr %39, %40
-  %42 = load %41
-  %43 = getelemptr @buf, 1
-  %44 = load @k
-  %45 = getelemptr %43, %44
-  store %42, %45
-  %46 = load @i
-  %47 = add %46, 1
-  store %47, @i
-  jump %if_final_0
-
-%if_false_0:
-  %48 = getelemptr @buf, 0
-  %49 = load @j
-  %50 = getelemptr %48, %49
-  %51 = load %50
-  %52 = getelemptr @buf, 1
-  %53 = load @k
-  %54 = getelemptr %52, %53
-  store %51, %54
-  %55 = load @j
-  %56 = add %55, 1
-  store %56, @j
-  jump %if_final_0
-
-%if_final_0:
-  %57 = load @k
-  %58 = add %57, 1
-  store %58, @k
-  jump %while_cond
-
-%while_final:
-  jump %while_cond_0
-
-%while_cond_0:
-  %59 = load @i
-  %60 = load @mid
-  %61 = lt %59, %60
-  br %61, %while_body_0, %while_final_0
-
-%while_body_0:
-  %62 = getelemptr @buf, 0
-  %63 = load @i
-  %64 = getelemptr %62, %63
-  %65 = load %64
-  %66 = getelemptr @buf, 1
-  %67 = load @k
-  %68 = getelemptr %66, %67
-  store %65, %68
-  %69 = load @i
-  %70 = add %69, 1
-  store %70, @i
-  %71 = load @k
-  %72 = add %71, 1
-  store %72, @k
-  jump %while_cond_0
-
-%while_final_0:
-  jump %while_cond_1
-
-%while_cond_1:
-  %73 = load @j
-  %74 = load @r
-  %75 = lt %73, %74
-  br %75, %while_body_1, %while_final_1
-
-%while_body_1:
-  %76 = getelemptr @buf, 0
-  %77 = load @j
-  %78 = getelemptr %76, %77
-  %79 = load %78
-  %80 = getelemptr @buf, 1
-  %81 = load @k
-  %82 = getelemptr %80, %81
-  store %79, %82
-  %83 = load @j
-  %84 = add %83, 1
-  store %84, @j
-  %85 = load @k
-  %86 = add %85, 1
-  store %86, @k
-  jump %while_cond_1
-
-%while_final_1:
-  jump %while_cond_2
-
-%while_cond_2:
-  %87 = load @l
-  %88 = load @r
-  %89 = lt %87, %88
-  br %89, %while_body_2, %while_final_2
-
-%while_body_2:
-  %90 = getelemptr @buf, 1
-  %91 = load @l
-  %92 = getelemptr %90, %91
-  %93 = load %92
-  %94 = getelemptr @buf, 0
-  %95 = load @l
-  %96 = getelemptr %94, %95
-  store %93, %96
-  %97 = load @l
-  %98 = add %97, 1
-  store %98, @l
-  jump %while_cond_2
-
-%while_final_2:
+%0:
   jump %exit
 
 %exit:
@@ -217,27 +30,17 @@ fun @merge_sort(%0: i32, %1: i32) {
 fun @main(): i32 {
 %entry:
   %ret = alloc i32
-  @n = alloc i32
-  jump %99
+  jump %1
 
-%99:
-  %100 = getelemptr @buf, 0
-  %101 = getelemptr %100, 0
-  %102 = call @getarray(%101)
-  store %102, @n
-  %103 = load @n
-  call @merge_sort(0, %103)
-  %104 = load @n
-  %105 = getelemptr @buf, 0
-  %106 = getelemptr %105, 0
-  call @putarray(%104, %106)
+%1:
+  store 1, @A
   store 0, %ret
   jump %exit
 
-%107:
+%2:
   jump %exit
 
 %exit:
-  %108 = load %ret
-  ret %108
+  %3 = load %ret
+  ret %3
 }

@@ -368,6 +368,7 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
         info.push_inst(program, entry_block, jump);
         // The last part
         info.conclude_func(program);
+        scopes.remove_curr_func();
         Ok(())
     }
 }
