@@ -347,8 +347,9 @@ impl<'ast> IRGenerator<'ast> for FuncDef {
         scopes.open();
         // Allocate and store the input parameters
         for (fparam, rparam) in self.func_fparams.iter().zip(params) {
+            let _type = program.func(func).dfg().value(rparam).ty().clone();
             let alloc = info
-                .create_new_allocation(program, Type::get_i32(), Some(&fparam.ident))
+                .create_new_allocation(program, _type, Some(&fparam.ident))
                 .unwrap();
             let store = info.create_new_value(program).store(rparam, alloc);
             info.push_inst_curr_bblock(program, store);
@@ -392,11 +393,10 @@ impl<'ast> IRGenerator<'ast> for FuncFParam {
         _program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        Ok(if self.sub_dims.len() > 0 {
-            Type::get_pointer(get_array_type(&self.sub_dims, scopes).unwrap())
-        } else {
-            Type::get_i32()
-        })
+        match &self.sub_dims {
+            Some(dims) => Ok(Type::get_pointer(get_array_type(&dims, scopes).unwrap())),
+            None => Ok(Type::get_i32()),
+        }
     }
 }
 

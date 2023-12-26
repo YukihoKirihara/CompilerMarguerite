@@ -91,7 +91,7 @@ pub enum FuncType {
 #[derive(Debug)]
 pub struct FuncFParam {
     pub ident: String,
-    pub sub_dims: Vec<ConstExp>,
+    pub sub_dims: Option<Vec<ConstExp>>,
 }
 
 /// Block       ::= "{" { BlockItem} "}";

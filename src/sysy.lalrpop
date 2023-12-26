@@ -98,8 +98,8 @@ FuncPrefix: (FuncType, String) = {
 
 /// Formal parameter of functions
 FuncFParam: FuncFParam = {
-    "int" <ident: Ident> => FuncFParam{ident: ident, sub_dims: Vec::new()},
-    "int" <ident: Ident> "[" "]" <sub_dims: ("[" <ConstExp> "]")*> => FuncFParam{ <> },
+    "int" <ident: Ident> => FuncFParam{ident: ident, sub_dims: None},
+    "int" <ident: Ident> "[" "]" <sub_dims: ("[" <ConstExp> "]")*> => FuncFParam{ident: ident, sub_dims: Some(sub_dims)},
 }
 
 /// The main body of functions

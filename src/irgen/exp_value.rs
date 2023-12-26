@@ -27,7 +27,7 @@ impl ExpValue {
                 info.push_inst_curr_bblock(program, load);
                 Ok(load)
             }
-            Self::ArrPtr(_) => Err(IRGenError::IsAnArray),
+            Self::ArrPtr(ptr) => Ok(ptr),
         }
     }
 
