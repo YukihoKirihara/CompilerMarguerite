@@ -135,7 +135,7 @@ MatchedStmt: Stmt = {
     },
     "break" ";" => Stmt::Break(Break{}),
     "continue" ";" => Stmt::Continue(Continue{}),
-    "return" <exp: Exp> ";" => Stmt::Return(Return { <> }),
+    "return" <exp: (Exp)?> ";" => Stmt::Return(Return { <> }),
 }
 
 UnMatchedStmt: Stmt = {

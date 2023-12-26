@@ -165,10 +165,10 @@ pub struct Break {}
 #[derive(Debug)]
 pub struct Continue {}
 
-/// Return      ::= "return" Exp ";";
+/// Return      ::= "return" [Exp] ";";
 #[derive(Debug)]
 pub struct Return {
-    pub exp: Exp,
+    pub exp: Option<Exp>,
 }
 
 /// V. Expressions

@@ -626,16 +626,18 @@ impl<'ast> IRGenerator<'ast> for Return {
         program: &mut Program,
         scopes: &mut ScopeManager<'ast>,
     ) -> Result<Self::Ret, IRGenError> {
-        let value = self
-            .exp
-            .generate(program, scopes)
-            .unwrap()
-            .get_int_value(program, scopes)
-            .unwrap();
+        if let Some(ret_exp) = &self.exp {
+            let value = ret_exp
+                .generate(program, scopes)
+                .unwrap()
+                .get_int_value(program, scopes)
+                .unwrap();
+            let info = scopes.mut_ref_curr_func().unwrap();
+            let ret_val = info.ret_val().unwrap();
+            let store = info.create_new_value(program).store(value, ret_val);
+            info.push_inst_curr_bblock(program, store);
+        }
         let info = scopes.mut_ref_curr_func().unwrap();
-        let ret_val = info.ret_val().unwrap();
-        let store = info.create_new_value(program).store(value, ret_val);
-        info.push_inst_curr_bblock(program, store);
         let jump = info.create_new_value(program).jump(info.exit());
         info.push_inst_curr_bblock(program, jump);
         let new_bblock = info.create_new_bblock(program, None);
