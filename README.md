@@ -1,3 +1,3 @@
 # Compiler_C2KoopaIR
-Part 1 of the Compiler Principles lab. Build an AST and translate C to Koopa IR.
+Part 2 of the Compiler Principles lab. Translate Koopa IR to RISC-V.
 
