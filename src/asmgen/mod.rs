@@ -14,6 +14,7 @@ mod program_info;
 mod register;
 
 pub fn generate(program: &Program, f: &mut File) -> Result<(), ASMGenError> {
+    // Adapt to the pointer width of riscv32
     Type::set_ptr_size(4);
     let mut program_info = ProgramInfo::new(program);
     program.generate(&mut program_info, f)

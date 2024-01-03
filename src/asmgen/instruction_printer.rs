@@ -21,7 +21,7 @@ impl<'f> InstPrinter<'f> {
 
     /// Print the beqz instruction
     /// beqz rs, label  : if %rs == 0, jump to .label.
-    pub fn beqz(&mut self, cond: &str, label: &str) {
+    pub fn _beqz(&mut self, cond: &str, label: &str) {
         writeln!(self.f, "  beqz {}, {}", cond, label).unwrap();
     }
 
@@ -130,7 +130,7 @@ impl<'f> InstPrinter<'f> {
     /// Print the xori instruction
     /// xori rd, rs, imm    : calculate %rs xor imm, and store the result to %rd.
     /// If the length of imm is greater than 12 bits, the instruction will be divided into 2 steps.
-    pub fn xori(&mut self, src: &str, dst: &str, imm: i32) {
+    pub fn _xori(&mut self, src: &str, dst: &str, imm: i32) {
         if imm >= IMM12_MIN && imm <= IMM12_MAX {
             writeln!(self.f, "  xori {}, {}, {}", dst, src, imm).unwrap();
         } else {
@@ -148,7 +148,7 @@ impl<'f> InstPrinter<'f> {
     /// Print the ori instruction
     /// ori rd, rs, imm    : calculate %rs or imm, and store the result to %rd.
     /// If the length of imm is greater than 12 bits, the instruction will be divided into 2 steps.
-    pub fn ori(&mut self, src: &str, dst: &str, imm: i32) {
+    pub fn _ori(&mut self, src: &str, dst: &str, imm: i32) {
         if imm >= IMM12_MIN && imm <= IMM12_MAX {
             writeln!(self.f, "  ori {}, {}, {}", dst, src, imm).unwrap();
         } else {
@@ -166,7 +166,7 @@ impl<'f> InstPrinter<'f> {
     /// Print the andi instruction
     /// andi rd, rs, imm    : calculate %rs and imm, and store the result to %rd.
     /// If the length of imm is greater than 12 bits, the instruction will be divided into 2 steps.
-    pub fn andi(&mut self, src: &str, dst: &str, imm: i32) {
+    pub fn _andi(&mut self, src: &str, dst: &str, imm: i32) {
         if imm >= IMM12_MIN && imm <= IMM12_MAX {
             writeln!(self.f, "  andi {}, {}, {}", dst, src, imm).unwrap();
         } else {
@@ -197,6 +197,18 @@ impl<'f> InstPrinter<'f> {
     /// mul rd, rs1, rs2    : multiply %rs1 and %rs2, and store the result to %rd.
     pub fn mul(&mut self, src1: &str, src2: &str, dst: &str) {
         writeln!(self.f, "  mul {}, {}, {}", dst, src1, src2).unwrap();
+    }
+
+    /// Print the muli instruction
+    /// muli rd, rs, imm    : multiply %rs and imm, and store the result to %rd.
+    /// If the length of imm is greater than 12 bits, the instruction will be divided into 2 steps.
+    pub fn muli(&mut self, src: &str, dst: &str, imm: i32) {
+        if imm >= IMM12_MIN && imm <= IMM12_MAX {
+            writeln!(self.f, "  muli {}, {}, {}", dst, src, imm).unwrap();
+        } else {
+            self.li(self.tmp, imm);
+            writeln!(self.f, "  mul {}, {}, {}", dst, src, self.tmp).unwrap();
+        }
     }
 
     /// Print the div instruction
