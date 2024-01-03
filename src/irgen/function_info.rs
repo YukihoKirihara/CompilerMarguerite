@@ -4,6 +4,7 @@ use koopa::ir::builder_traits::*;
 use koopa::ir::Value;
 use koopa::ir::{BasicBlock, Function, Program, Type};
 
+/// FunctionInfo is a struct to record information of a function
 pub struct FunctionInfo {
     func: Function,
     entry: BasicBlock,
@@ -32,11 +33,6 @@ impl FunctionInfo {
     /// Return the Function structure
     pub fn func(&self) -> Function {
         self.func
-    }
-
-    /// Return the entry block
-    pub fn entry(&self) -> BasicBlock {
-        self.entry
     }
 
     /// Return the exit block
