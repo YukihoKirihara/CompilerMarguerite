@@ -30,8 +30,8 @@ impl<'p> ASMGenerator<'p> for Program {
         let program = pinfo.ref_program();
         // Iterate over the global values
         // .rodata, .data and .bss are simplified to one single .data
-        writeln!(f, "  .data").unwrap();
         for &value in self.inst_layout() {
+            writeln!(f, "  .data").unwrap();
             let data = self.borrow_value(value);
             let name = &data.name().as_ref().unwrap()[1..];
             pinfo.record_global_value(value, name.to_string());

@@ -2,22 +2,18 @@
   .text
   .globl main
 main:
-  addi sp, sp, -32
-.L_entry__0:
-unfinished.
-  j .L__1
-.L__1:
-unfinished.
-unfinished.
-unfinished.
-  lw t0, 16(sp)
-  sw t0, 20(sp)
-  j .L_exit__2
-.L__3:
-  j .L_exit__2
-.L_exit__2:
-  lw t0, 20(sp)
+  addi sp, sp, -16
+.L_entry__1:
+  j .L__2
+.L__2:
+  li t0, 0
+  sw t0, 8(sp)
+  j .L_exit__3
+.L__0:
+  j .L_exit__3
+.L_exit__3:
+  lw t0, 8(sp)
   sw t0, 12(sp)
   lw a0, 12(sp)
-  addi sp, sp, 32
+  addi sp, sp, 16
   ret
