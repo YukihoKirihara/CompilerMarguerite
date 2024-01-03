@@ -7,6 +7,7 @@ use std::fs::File;
 /// Assemble values of different types.
 /// Slot.offset in Local(Slot) is the real offset to the new %sp
 pub enum AsmValue<'p> {
+    Void,
     Const(i32),
     Global(&'p str),
     Local(Slot),
@@ -32,6 +33,7 @@ impl<'p> AsmValue<'p> {
     ) -> Result<(), ASMGenError> {
         let mut printer = InstPrinter::new(f, reg);
         match self {
+            Self::Void => Err(ASMGenError::VoidValue),
             Self::Const(num) => {
                 printer.li(reg, *num);
                 Ok(())
@@ -69,6 +71,7 @@ impl<'p> AsmValue<'p> {
     ) -> Result<(), ASMGenError> {
         let mut printer = InstPrinter::new(f, reg);
         match self {
+            Self::Void => Err(ASMGenError::VoidValue),
             Self::Const(_) => Err(ASMGenError::UnKnown),
             Self::Global(label) => {
                 printer.la(reg, label);
@@ -102,6 +105,7 @@ impl<'p> AsmValue<'p> {
     ) -> Result<(), ASMGenError> {
         let mut printer = InstPrinter::new(f, tmp);
         match self {
+            Self::Void => Ok(()),
             Self::Const(_) => Err(ASMGenError::ConstValue),
             Self::Global(label) => {
                 printer.la(tmp, label);

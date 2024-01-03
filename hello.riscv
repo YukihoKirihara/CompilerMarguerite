@@ -1,24 +1,40 @@
   .text
+  .globl f
+f:
+  addi sp, sp, -16
+.L_entry__2:
+  j .L__3
+.L__3:
+  li t0, 0
+  sw t0, 8(sp)
+  j .L_exit__1
+.L__0:
+  j .L_exit__1
+.L_exit__1:
+  lw t0, 8(sp)
+  sw t0, 12(sp)
+  lw a0, 12(sp)
+  addi sp, sp, 16
+  ret
+  .text
   .globl main
 main:
   addi sp, sp, -16
-.L_entry__2:
-  j .L__0
-.L__0:
-  li t0, 0
-  li t1, 2
-  sub t0, t0, t1
+  sw ra, 12(sp)
+.L_entry__4:
+  j .L__7
+.L__7:
+  call f
+  sw a0, 0(sp)
+  lw t0, 0(sp)
   sw t0, 4(sp)
-#
+  j .L_exit__5
+.L__6:
+  j .L_exit__5
+.L_exit__5:
   lw t0, 4(sp)
-#
-  sw t0, 12(sp)
-  j .L_exit__1
-.L__3:
-  j .L_exit__1
-.L_exit__1:
-  lw t0, 12(sp)
   sw t0, 8(sp)
   lw a0, 8(sp)
+  lw ra, 12(sp)
   addi sp, sp, 16
   ret

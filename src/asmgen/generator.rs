@@ -274,7 +274,10 @@ impl<'p> ASMGenerator4Values<'p> for Binary {
         }
         // Load the value from %t0
         let info = pinfo.mut_ref_curr_func().unwrap();
-        let asm_value = AsmValue::Local(info.get_value_slot_sp_offset(v).unwrap());
+        let asm_value = match info.get_value_slot_sp_offset(v) {
+            Ok(slot) => AsmValue::Local(slot),
+            Err(_) => AsmValue::Void,
+        };
         asm_value.read_register(T0!(), T1!(), 0, f).unwrap();
         Ok(())
     }
@@ -380,7 +383,10 @@ impl<'p> ASMGenerator4Values<'p> for GetElemPtr {
         printer.add(T0!(), T1!(), T0!());
         // Store the result
         let info = pinfo.mut_ref_curr_func().unwrap();
-        let asm_value = AsmValue::Local(info.get_value_slot_sp_offset(v).unwrap());
+        let asm_value = match info.get_value_slot_sp_offset(v) {
+            Ok(slot) => AsmValue::Local(slot),
+            Err(_) => AsmValue::Void,
+        };
         asm_value.read_register(T0!(), T1!(), 0, f).unwrap();
         Ok(())
     }
@@ -418,7 +424,10 @@ impl<'p> ASMGenerator4Values<'p> for GetPtr {
         printer.add(T0!(), T1!(), T0!());
         // Store the result
         let info = pinfo.mut_ref_curr_func().unwrap();
-        let asm_value = AsmValue::Local(info.get_value_slot_sp_offset(v).unwrap());
+        let asm_value = match info.get_value_slot_sp_offset(v) {
+            Ok(slot) => AsmValue::Local(slot),
+            Err(_) => AsmValue::Void,
+        };
         asm_value.read_register(T0!(), T1!(), 0, f).unwrap();
         Ok(())
     }
@@ -472,7 +481,10 @@ impl<'p> ASMGenerator4Values<'p> for Load {
         }
         // Load the value from %t0
         let info = pinfo.mut_ref_curr_func().unwrap();
-        let asm_value = AsmValue::Local(info.get_value_slot_sp_offset(v).unwrap());
+        let asm_value = match info.get_value_slot_sp_offset(v) {
+            Ok(slot) => AsmValue::Local(slot),
+            Err(_) => AsmValue::Void,
+        };
         asm_value.read_register(T0!(), T1!(), 0, f).unwrap();
         Ok(())
     }

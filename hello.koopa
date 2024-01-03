@@ -14,20 +14,37 @@ decl @starttime()
 
 decl @stoptime()
 
-fun @main(): i32 {
+fun @f(): i32 {
 %entry:
   %ret = alloc i32
   jump %0
 
 %0:
-  %1 = sub 0, 2
-  store %1, %ret
+  store 0, %ret
   jump %exit
 
-%2:
+%1:
   jump %exit
 
 %exit:
-  %3 = load %ret
-  ret %3
+  %2 = load %ret
+  ret %2
+}
+
+fun @main(): i32 {
+%entry:
+  %ret = alloc i32
+  jump %3
+
+%3:
+  %4 = call @f()
+  store %4, %ret
+  jump %exit
+
+%5:
+  jump %exit
+
+%exit:
+  %6 = load %ret
+  ret %6
 }

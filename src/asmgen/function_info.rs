@@ -121,7 +121,7 @@ impl FunctionInfo {
         let s = self.alloc_total;
         let r = if self.is_leaf() { 0 } else { 4 };
         let a = match self.max_arg_num {
-            Some(num) => max(num - 8, 0) * 4,
+            Some(num) => (if num < 8 { 0 } else { num - 8 }) * 4,
             _ => 0,
         };
         let offset = (s + r + a + 15) / 16 * 16;

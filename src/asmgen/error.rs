@@ -9,6 +9,7 @@ pub enum ASMGenError {
     LocalValueNotFound,
     Register,
     UnKnown,
+    VoidValue,
 }
 
 impl Error for ASMGenError {}
@@ -21,6 +22,7 @@ impl Display for ASMGenError {
             Self::LocalValueNotFound => write!(f, "Tried to visit an unknown local value."),
             Self::Register => write!(f, "Tried to locate a register in the memory"),
             Self::UnKnown => write!(f, "An unknown error occurs."),
+            Self::VoidValue => write!(f, "Tried to read from or write to a void value."),
         }
     }
 }
