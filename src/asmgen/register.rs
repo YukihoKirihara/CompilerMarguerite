@@ -20,6 +20,13 @@ macro_rules! T2 {
 }
 pub(crate) use T2;
 
+macro_rules! Ti {
+    ($i:expr) => {
+        format!("t{}", $i)
+    };
+}
+pub(crate) use Ti;
+
 macro_rules! SP {
     () => {
         "sp"

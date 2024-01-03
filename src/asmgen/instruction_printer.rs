@@ -199,18 +199,6 @@ impl<'f> InstPrinter<'f> {
         writeln!(self.f, "  mul {}, {}, {}", dst, src1, src2).unwrap();
     }
 
-    /// Print the muli instruction
-    /// muli rd, rs, imm    : multiply %rs and imm, and store the result to %rd.
-    /// If the length of imm is greater than 12 bits, the instruction will be divided into 2 steps.
-    pub fn muli(&mut self, src: &str, dst: &str, imm: i32) {
-        if imm >= IMM12_MIN && imm <= IMM12_MAX {
-            writeln!(self.f, "  muli {}, {}, {}", dst, src, imm).unwrap();
-        } else {
-            self.li(self.tmp, imm);
-            writeln!(self.f, "  mul {}, {}, {}", dst, src, self.tmp).unwrap();
-        }
-    }
-
     /// Print the div instruction
     /// div rd, rs1, rs2    : divide %rs1 by %rs2, and store the result to %rd.
     pub fn div(&mut self, src1: &str, src2: &str, dst: &str) {
