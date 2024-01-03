@@ -377,7 +377,7 @@ impl<'p> ASMGenerator4Values<'p> for GetElemPtr {
             TypeKind::Pointer(base) => base.size(),
             _ => 0,
         };
-        let mut printer = InstPrinter::new(f, &Ti!(3));
+        let mut printer = InstPrinter::new(f, T3!());
         printer.li(T2!(), size as i32);
         printer.mul(T1!(), T1!(), T2!());
         // Calculate the final address
@@ -419,7 +419,7 @@ impl<'p> ASMGenerator4Values<'p> for GetPtr {
             TypeKind::Pointer(base) => base.size(),
             _ => 0,
         };
-        let mut printer = InstPrinter::new(f, &Ti!(3));
+        let mut printer = InstPrinter::new(f, T3!());
         printer.li(T2!(), size as i32);
         printer.mul(T1!(), T1!(), T2!());
         // Calculate the final address
