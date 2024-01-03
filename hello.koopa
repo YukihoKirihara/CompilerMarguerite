@@ -1,5 +1,3 @@
-global @y = alloc i32, zeroinit
-
 decl @getint(): i32
 
 decl @getch(): i32
@@ -19,21 +17,17 @@ decl @stoptime()
 fun @main(): i32 {
 %entry:
   %ret = alloc i32
-  @x = alloc i32
   jump %0
 
 %0:
-  %1 = mul 2, 3
-  %2 = add 1, %1
-  store %2, @x
-  %3 = load @x
-  store %3, %ret
+  %1 = sub 0, 2
+  store %1, %ret
   jump %exit
 
-%4:
+%2:
   jump %exit
 
 %exit:
-  %5 = load %ret
-  ret %5
+  %3 = load %ret
+  ret %3
 }

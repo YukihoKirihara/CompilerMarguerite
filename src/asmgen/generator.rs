@@ -152,7 +152,7 @@ impl<'p> ASMGenerator<'p> for ValueData {
     fn generate(&self, pinfo: &'p mut ProgramInfo, f: &mut File) -> Result<Self::Ret, ASMGenError> {
         match self.kind() {
             ValueKind::Aggregate(v) => v.generate(pinfo, f),
-            ValueKind::Binary(v) => v.generate(pinfo, f),
+            ValueKind::Binary(v) => v.generate(pinfo, self, f),
             ValueKind::Branch(v) => v.generate(pinfo, f),
             ValueKind::Call(v) => v.generate(pinfo, self, f),
             ValueKind::GetElemPtr(v) => v.generate(pinfo, self, f),
@@ -210,9 +210,14 @@ impl<'p> ASMGenerator<'p> for Aggregate {
     }
 }
 
-impl<'p> ASMGenerator<'p> for Binary {
+impl<'p> ASMGenerator4Values<'p> for Binary {
     type Ret = ();
-    fn generate(&self, pinfo: &'p mut ProgramInfo, f: &mut File) -> Result<Self::Ret, ASMGenError> {
+    fn generate(
+        &self,
+        pinfo: &'p mut ProgramInfo,
+        v: &ValueData,
+        f: &mut File,
+    ) -> Result<Self::Ret, ASMGenError> {
         // Generate the left factor and store into %t0
         let lhs = self.lhs().generate(pinfo, f).unwrap();
         lhs.write_register(T0!(), 0, f).unwrap();
@@ -267,6 +272,10 @@ impl<'p> ASMGenerator<'p> for Binary {
             BinaryOp::Sub => printer.sub(T0!(), T1!(), T0!()),
             BinaryOp::Xor => printer.xor(T0!(), T1!(), T0!()),
         }
+        // Load the value from %t0
+        let info = pinfo.mut_ref_curr_func().unwrap();
+        let asm_value = AsmValue::Local(info.get_value_slot_sp_offset(v).unwrap());
+        asm_value.read_register(T0!(), T1!(), 0, f).unwrap();
         Ok(())
     }
 }
@@ -481,7 +490,6 @@ impl<'p> ASMGenerator<'p> for Return {
                 .unwrap();
         }
         // Generate Epilogue
-        // 如必要, 从栈帧中恢复 ra 寄存器. 然后, 复原 sp 寄存器的值. 最后生成 ret.
         let info = pinfo.mut_ref_curr_func().unwrap();
         let offset = info.get_stack_offset() as i32;
         let mut printer = InstPrinter::new(f, T0!());
