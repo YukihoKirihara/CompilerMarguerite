@@ -1,40 +1,130 @@
-  .text
-  .globl f
-f:
-  addi sp, sp, -16
-.L_entry__2:
-  j .L__3
-.L__3:
-  li t0, 0
-  sw t0, 8(sp)
-  j .L_exit__1
-.L__0:
-  j .L_exit__1
-.L_exit__1:
-  lw t0, 8(sp)
-  sw t0, 12(sp)
-  lw a0, 12(sp)
-  addi sp, sp, 16
-  ret
+  .data
+  .globl garr
+garr:
+   .word 6
+   .word 7
+   .word 8
+   .word 9
+   .word 10
+   .word 11
+   .word 12
+   .word 13
+   .word 14
+   .word 15
   .text
   .globl main
 main:
-  addi sp, sp, -16
-  sw ra, 12(sp)
-.L_entry__4:
-  j .L__7
-.L__7:
-  call f
-  sw a0, 0(sp)
-  lw t0, 0(sp)
-  sw t0, 4(sp)
-  j .L_exit__5
-.L__6:
-  j .L_exit__5
-.L_exit__5:
-  lw t0, 4(sp)
+  addi sp, sp, -96
+.L_entry__0:
+  j .L__3
+.L__3:
+  addi t0, sp, 44
+  li t1, 0
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 84(sp)
+  li t0, 1
+  lw t1, 84(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 1
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
   sw t0, 8(sp)
-  lw a0, 8(sp)
-  lw ra, 12(sp)
-  addi sp, sp, 16
+  li t0, 2
+  lw t1, 8(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 2
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 40(sp)
+  li t0, 3
+  lw t1, 40(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 3
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 32(sp)
+  li t0, 4
+  lw t1, 32(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 4
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 20(sp)
+  li t0, 5
+  lw t1, 20(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 5
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 88(sp)
+  li t0, 0
+  lw t1, 88(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 6
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 12(sp)
+  li t0, 0
+  lw t1, 12(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 7
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 28(sp)
+  li t0, 0
+  lw t1, 28(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 8
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 4(sp)
+  li t0, 0
+  lw t1, 4(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 9
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 36(sp)
+  li t0, 0
+  lw t1, 36(sp)
+  sw t0, 0(t1)
+  addi t0, sp, 44
+  li t1, 0
+  li t2, 4
+  mul t1, t1, t2
+  add t0, t0, t1
+  sw t0, 16(sp)
+  lw t0, 16(sp)
+  lw t0, 0(t0)
+  sw t0, 0(sp)
+  lw t0, 0(sp)
+  sw t0, 24(sp)
+  j .L_exit__2
+.L__1:
+  j .L_exit__2
+.L_exit__2:
+  lw t0, 24(sp)
+  sw t0, 92(sp)
+  lw a0, 92(sp)
+  addi sp, sp, 96
   ret

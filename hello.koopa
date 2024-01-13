@@ -1,3 +1,5 @@
+global @garr = alloc [i32, 10], {6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
 decl @getint(): i32
 
 decl @getch(): i32
@@ -14,37 +16,69 @@ decl @starttime()
 
 decl @stoptime()
 
-fun @f(): i32 {
-%entry:
-  %ret = alloc i32
-  jump %0
-
-%0:
-  store 0, %ret
-  jump %exit
-
-%1:
-  jump %exit
-
-%exit:
-  %2 = load %ret
-  ret %2
-}
-
 fun @main(): i32 {
 %entry:
   %ret = alloc i32
-  jump %3
+  @arr = alloc [i32, 10]
+  @i = alloc i32
+  @sum = alloc i32
+  jump %0
 
-%3:
-  %4 = call @f()
-  store %4, %ret
+%0:
+  %1 = getelemptr @arr, 0
+  store 1, %1
+  %2 = getelemptr @arr, 1
+  store 2, %2
+  %3 = getelemptr @arr, 2
+  store 3, %3
+  %4 = getelemptr @arr, 3
+  store 4, %4
+  %5 = getelemptr @arr, 4
+  store 5, %5
+  %6 = getelemptr @arr, 5
+  store 0, %6
+  %7 = getelemptr @arr, 6
+  store 0, %7
+  %8 = getelemptr @arr, 7
+  store 0, %8
+  %9 = getelemptr @arr, 8
+  store 0, %9
+  %10 = getelemptr @arr, 9
+  store 0, %10
+  store 0, @i
+  store 0, @sum
+  jump %while_cond
+
+%while_cond:
+  %11 = load @i
+  %12 = lt %11, 10
+  br %12, %while_body, %while_final
+
+%while_body:
+  %13 = load @sum
+  %14 = load @i
+  %15 = getelemptr @arr, %14
+  %16 = load %15
+  %17 = add %13, %16
+  %18 = load @i
+  %19 = getelemptr @garr, %18
+  %20 = load %19
+  %21 = add %17, %20
+  store %21, @sum
+  %22 = load @i
+  %23 = add %22, 1
+  store %23, @i
+  jump %while_cond
+
+%while_final:
+  %24 = load @sum
+  store %24, %ret
   jump %exit
 
-%5:
+%25:
   jump %exit
 
 %exit:
-  %6 = load %ret
-  ret %6
+  %26 = load %ret
+  ret %26
 }

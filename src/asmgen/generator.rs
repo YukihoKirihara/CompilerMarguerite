@@ -379,7 +379,7 @@ impl<'p> ASMGenerator4Values<'p> for GetElemPtr {
         };
         let mut printer = InstPrinter::new(f, T3!());
         printer.li(T2!(), size as i32);
-        printer.mul(T1!(), T1!(), T2!());
+        printer.mul(T1!(), T2!(), T1!());
         // Calculate the final address
         printer.add(T0!(), T1!(), T0!());
         // Store the result
@@ -421,7 +421,7 @@ impl<'p> ASMGenerator4Values<'p> for GetPtr {
         };
         let mut printer = InstPrinter::new(f, T3!());
         printer.li(T2!(), size as i32);
-        printer.mul(T1!(), T1!(), T2!());
+        printer.mul(T1!(), T2!(), T1!());
         // Calculate the final address
         printer.add(T0!(), T1!(), T0!());
         // Store the result
