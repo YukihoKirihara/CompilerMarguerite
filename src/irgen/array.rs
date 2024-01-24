@@ -5,6 +5,7 @@ use super::scope_manager::ScopeManager;
 use koopa::ir::builder_traits::*;
 use koopa::ir::{Program, Type, TypeKind, Value};
 
+/// A recursive type of array
 pub enum ArrayType {
     Array(Vec<ArrayType>),
     BaseValue(Value),
