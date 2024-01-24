@@ -1,3 +1,6 @@
-# Compiler_KoopaIR2RISCV
-Part 2 of the Compiler Principles lab. Translate Koopa IR to RISC-V.
+# CompilerMarguerite
+A compiler that translates SysY to Koopa IR and RISC-V.
 
+## Instructions to run in assigned modes
+cargo run -- -koopa hello.c -o hello.koopa
+cargo run -- -riscv hello.c -o hello.riscv
